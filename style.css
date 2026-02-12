@@ -14,12 +14,17 @@ z-index: -1;
 
 #stage {
 outline: 0;
-margin: 3em auto;
+position: fixed;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+margin: 0;
 }
 
 #title, #splash {
 position: absolute;
-top: 100px;
+top: 50%;
+transform: translateY(-50%);
 width: 100%;
 background-color: rgba(255, 255, 255, 0.8);
 cursor: pointer;

@@ -1,5 +1,6 @@
 import Hammer from "./hammer.js";
-import { TILEWIDTH, TILEFLOORHEIGHT, UP, DOWN, LEFT, RIGHT } from "./constants.js";
+import { TILEWIDTH, TILEHEIGHT, TILEFLOORHEIGHT } from "./constants.js";
+import { UP, DOWN, LEFT, RIGHT } from "./constants.js";
 
 export function initTouchUI(control, touch) {
   if (window.Touch || "ontouchstart" in window) {
@@ -144,10 +145,14 @@ export function bindPanControls(stage, options) {
 }
 
 export function getMoveFromClick(ev, stage, cameraX, cameraY) {
-  var screenX = ev.pageX ? ev.pageX - stage.offsetLeft : ev.x;
-  var screenY = ev.pageY ? ev.pageY - stage.offsetTop - 20 : ev.y;
+  var rect = stage.getBoundingClientRect();
+  var screenX = ev.clientX - rect.left;
+  var screenY = ev.clientY - rect.top;
   var worldX = screenX + cameraX;
-  var worldY = screenY + cameraY;
+  // Row spacing uses TILEFLOORHEIGHT, but the sprite is taller.
+  // Use half overlap bias to avoid pushing lower tile area to next row.
+  var rowPickBiasY = Math.floor((TILEHEIGHT - TILEFLOORHEIGHT) / 2);
+  var worldY = screenY + cameraY - rowPickBiasY;
   var clickx = Math.floor(worldX / TILEWIDTH);
   var clicky = Math.floor(worldY / TILEFLOORHEIGHT);
   return { clickx, clicky };
