@@ -1,3 +1,5 @@
+import { TILEWIDTH, TILEFLOORHEIGHT } from "./constants.js";
+
 export function createGameActions(options) {
   var dom = options.dom;
   var render = options.render;
@@ -9,6 +11,19 @@ export function createGameActions(options) {
   var input = options.input;
   var directions = options.directions;
   var keys = options.keys;
+
+  function updateCameraBounds() {
+    var viewportWidth = Math.min(assets.map.width, document.documentElement.clientWidth);
+    var viewportHeight = Math.min(assets.map.height, document.documentElement.clientHeight);
+    store.maxCameraX = Math.max(0, assets.map.width - viewportWidth);
+    store.maxCameraY = Math.max(0, assets.map.height - viewportHeight);
+  }
+
+  function clampCamera() {
+    updateCameraBounds();
+    store.cameraX = Math.max(0, Math.min(store.cameraX, store.maxCameraX));
+    store.cameraY = Math.max(0, Math.min(store.cameraY, store.maxCameraY));
+  }
 
   function redraw() {
     render.drawStage(
@@ -27,13 +42,47 @@ export function createGameActions(options) {
   }
 
   function panBy(deltaX, deltaY) {
+    clampCamera();
     store.cameraX = Math.max(0, Math.min(store.cameraX - deltaX, store.maxCameraX));
     store.cameraY = Math.max(0, Math.min(store.cameraY - deltaY, store.maxCameraY));
     redraw();
   }
 
   function canPan() {
+    clampCamera();
     return store.maxCameraX > 0 || store.maxCameraY > 0;
+  }
+
+  function keepPlayerInView() {
+    if (!store.levelObj || !store.levelObj["startState"]) {
+      return;
+    }
+    clampCamera();
+    var viewportWidth = Math.min(assets.map.width, document.documentElement.clientWidth);
+    var viewportHeight = Math.min(assets.map.height, document.documentElement.clientHeight);
+    var player = store.levelObj["startState"]["player"];
+    var playerPixelX = player[0] * TILEWIDTH + TILEWIDTH / 2;
+    var playerPixelY = player[1] * TILEFLOORHEIGHT + TILEFLOORHEIGHT / 2;
+    var marginX = Math.max(40, Math.floor(viewportWidth * 0.25));
+    var marginY = Math.max(40, Math.floor(viewportHeight * 0.25));
+    var leftBound = store.cameraX + marginX;
+    var rightBound = store.cameraX + viewportWidth - marginX;
+    var topBound = store.cameraY + marginY;
+    var bottomBound = store.cameraY + viewportHeight - marginY;
+
+    if (playerPixelX < leftBound) {
+      store.cameraX = playerPixelX - marginX;
+    } else if (playerPixelX > rightBound) {
+      store.cameraX = playerPixelX - (viewportWidth - marginX);
+    }
+
+    if (playerPixelY < topBound) {
+      store.cameraY = playerPixelY - marginY;
+    } else if (playerPixelY > bottomBound) {
+      store.cameraY = playerPixelY - (viewportHeight - marginY);
+    }
+
+    clampCamera();
   }
 
   function run(ev) {
@@ -119,6 +168,7 @@ export function createGameActions(options) {
         if (!store.moving) {
           store.levelObj["steps"].push(structuredClone(gameStateObj));
         }
+        keepPlayerInView();
         store.mapNeedsRedraw = true;
       }
       if (logic.isLevelFinished(store.levelObj, gameStateObj)) {
@@ -149,6 +199,7 @@ export function createGameActions(options) {
       assets.tileMapping,
       assets.outsideDecoMapping
     );
+    keepPlayerInView();
     redraw();
   }
 
