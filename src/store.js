@@ -9,6 +9,11 @@ export function createStore(levels) {
     currentLevelIndex: 0,
     levelObj: null,
     mapObj: null,
-    gridCache: null
+    gridCache: null,
+    cameraX: 0,
+    cameraY: 0,
+    maxCameraX: 0,
+    maxCameraY: 0,
+    suppressNextClick: false
   };
 }

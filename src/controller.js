@@ -21,8 +21,19 @@ export function createGameActions(options) {
       assets.images,
       assets.tileMapping,
       assets.playerImages,
-      logic.hasItem
+      logic.hasItem,
+      store
     );
+  }
+
+  function panBy(deltaX, deltaY) {
+    store.cameraX = Math.max(0, Math.min(store.cameraX - deltaX, store.maxCameraX));
+    store.cameraY = Math.max(0, Math.min(store.cameraY - deltaY, store.maxCameraY));
+    redraw();
+  }
+
+  function canPan() {
+    return store.maxCameraX > 0 || store.maxCameraY > 0;
   }
 
   function run(ev) {
@@ -127,6 +138,9 @@ export function createGameActions(options) {
     store.levelObj = structuredClone(store.levels[store.currentLevelIndex]);
     store.mapObj = store.levelObj["mapObj"];
     store.currentImage = 0;
+    store.cameraX = 0;
+    store.cameraY = 0;
+    store.gridCache = null;
     dom.info.querySelector("span").textContent = store.currentLevelIndex;
     render.drawMap(
       assets.map,
@@ -155,7 +169,12 @@ export function createGameActions(options) {
   }
 
   function move(ev) {
-    var coords = input.getMoveFromClick(ev, assets.stage);
+    if (store.suppressNextClick) {
+      store.suppressNextClick = false;
+      return;
+    }
+
+    var coords = input.getMoveFromClick(ev, assets.stage, store.cameraX, store.cameraY);
     var clickx = coords.clickx;
     var clicky = coords.clicky;
     var playerx = store.levelObj["startState"]["player"][0];
@@ -266,6 +285,8 @@ export function createGameActions(options) {
     prev: prev,
     next: next,
     move: move,
+    panBy: panBy,
+    canPan: canPan,
     start: start
   };
 }

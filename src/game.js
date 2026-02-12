@@ -8,6 +8,7 @@ import {
 	initTouchUI,
 	initHammer,
 	bindUIControls,
+	bindPanControls,
 	getMoveFromClick
 } from "./input.js";
 import { parseLevels } from "./levels.js";
@@ -153,6 +154,18 @@ initHammer(document.documentElement, function(direction) {
 	}
 });
 
+bindPanControls(stage, {
+	canPan: function() {
+		return actions.canPan();
+	},
+	onPan: function(dx, dy) {
+		actions.panBy(dx, dy);
+	},
+	onPanEnd: function() {
+		store.suppressNextClick = true;
+	}
+});
+
 initMusicUI();
 
 function start() {
@@ -161,6 +174,9 @@ function start() {
 		toggleFullscreen: toggleFullscreen,
 		animationState: animationState,
 		cloudRenderer: cloudRenderer
+	});
+	window.addEventListener("resize", function() {
+		actions.panBy(0, 0);
 	});
 	/*
 	window.addEventListener('orientationchange', function() {

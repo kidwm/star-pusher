@@ -117,17 +117,42 @@ export function drawStage(
   images,
   tileMapping,
   playerImages,
-  hasItem
+  hasItem,
+  viewState
 ) {
   var gameStateObj = levelObj["startState"];
   var goals = levelObj["goals"];
-  stage.width = map.width;
-  stage.height = map.height;
-  position.drawImage(map, 0, 0);
+  var viewportWidth = Math.min(map.width, document.documentElement.clientWidth);
+  var viewportHeight = Math.min(map.height, document.documentElement.clientHeight);
+
+  stage.width = viewportWidth;
+  stage.height = viewportHeight;
+
+  var maxCameraX = Math.max(0, map.width - viewportWidth);
+  var maxCameraY = Math.max(0, map.height - viewportHeight);
+  viewState.maxCameraX = maxCameraX;
+  viewState.maxCameraY = maxCameraY;
+  viewState.cameraX = Math.max(0, Math.min(viewState.cameraX, maxCameraX));
+  viewState.cameraY = Math.max(0, Math.min(viewState.cameraY, maxCameraY));
+
+  var cameraX = viewState.cameraX;
+  var cameraY = viewState.cameraY;
+
+  position.drawImage(
+    map,
+    cameraX,
+    cameraY,
+    viewportWidth,
+    viewportHeight,
+    0,
+    0,
+    viewportWidth,
+    viewportHeight
+  );
 
   var revamp = function(x, y) {
-    var tx = x * TILEWIDTH;
-    var ty = y * TILEFLOORHEIGHT;
+    var tx = x * TILEWIDTH - cameraX;
+    var ty = y * TILEFLOORHEIGHT - cameraY;
     if (mapObj[x][y + 1] == "x" || mapObj[x][y + 1] == "#") {
       position.drawImage(
         tileMapping[mapObj[x][y + 1]],
@@ -145,8 +170,8 @@ export function drawStage(
 
   for (var x = 0; x < mapObj.length; x++) {
     for (var y = 0; y < mapObj[0].length; y++) {
-      var tx = x * TILEWIDTH;
-      var ty = y * TILEFLOORHEIGHT;
+      var tx = x * TILEWIDTH - cameraX;
+      var ty = y * TILEFLOORHEIGHT - cameraY;
       if (hasItem(gameStateObj["stars"], x, y)) {
         if (hasItem(goals, x, y)) {
           position.drawImage(images["covered goal"], tx, ty);

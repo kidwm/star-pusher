@@ -88,10 +88,67 @@ export function bindUIControls(options) {
   );
 }
 
-export function getMoveFromClick(ev, stage) {
-  var clickx = ev.pageX ? Math.floor((ev.pageX - stage.offsetLeft) / TILEWIDTH) : ev.x;
-  var clicky = ev.pageY
-    ? Math.floor((ev.pageY - stage.offsetTop - 20) / TILEFLOORHEIGHT)
-    : ev.y;
+export function bindPanControls(stage, options) {
+  var isPanning = false;
+  var lastX = 0;
+  var lastY = 0;
+  var moved = false;
+  var canPan = options.canPan;
+  var onPan = options.onPan;
+  var onPanEnd = options.onPanEnd;
+
+  stage.addEventListener("pointerdown", function(ev) {
+    if (!canPan()) {
+      return;
+    }
+    isPanning = true;
+    moved = false;
+    lastX = ev.clientX;
+    lastY = ev.clientY;
+    stage.setPointerCapture(ev.pointerId);
+  });
+
+  stage.addEventListener("pointermove", function(ev) {
+    if (!isPanning) {
+      return;
+    }
+    var dx = ev.clientX - lastX;
+    var dy = ev.clientY - lastY;
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+      moved = true;
+      onPan(dx, dy);
+    }
+    lastX = ev.clientX;
+    lastY = ev.clientY;
+  });
+
+  stage.addEventListener("pointerup", function(ev) {
+    if (!isPanning) {
+      return;
+    }
+    isPanning = false;
+    stage.releasePointerCapture(ev.pointerId);
+    if (moved) {
+      onPanEnd();
+    }
+  });
+
+  stage.addEventListener("wheel", function(ev) {
+    if (!canPan()) {
+      return;
+    }
+    ev.preventDefault();
+    onPan(-ev.deltaX, -ev.deltaY);
+    onPanEnd();
+  }, { passive: false });
+}
+
+export function getMoveFromClick(ev, stage, cameraX, cameraY) {
+  var screenX = ev.pageX ? ev.pageX - stage.offsetLeft : ev.x;
+  var screenY = ev.pageY ? ev.pageY - stage.offsetTop - 20 : ev.y;
+  var worldX = screenX + cameraX;
+  var worldY = screenY + cameraY;
+  var clickx = Math.floor(worldX / TILEWIDTH);
+  var clicky = Math.floor(worldY / TILEFLOORHEIGHT);
   return { clickx, clicky };
 }
