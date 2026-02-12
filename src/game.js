@@ -121,7 +121,7 @@ var run = function(ev) {
 			case 8:
 				if(levelObj['steps'].length > 1) {
 					levelObj['steps'].pop();
-					levelObj['startState'] = deepCopy(levelObj['steps'][levelObj['steps'].length - 1]);
+					levelObj['startState'] = structuredClone(levelObj['steps'][levelObj['steps'].length - 1]);
 					mapNeedsRedraw = true;
 				}
 				break;
@@ -165,7 +165,7 @@ var run = function(ev) {
 			});
             if (moved) {
             	if (!moving) {
-                	levelObj['steps'].push(deepCopy(gameStateObj));
+                	levelObj['steps'].push(structuredClone(gameStateObj));
                 }
                 mapNeedsRedraw = true;
 			}
@@ -193,7 +193,7 @@ var run = function(ev) {
 };
 
 var reset = function() {
-	levelObj = deepCopy(levels[currentLevelIndex]);
+	levelObj = structuredClone(levels[currentLevelIndex]);
 	mapObj = levelObj['mapObj'];
 	currentImage = 0;
 	info.querySelector('span').textContent = currentLevelIndex;
@@ -269,7 +269,7 @@ var control = document.getElementById('control');
 var touch = document.getElementById('touch');
 var data = document.getElementById('data');
 var lines = data.innerHTML + '\n';
-var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, deepCopy);
+var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, structuredClone);
 var levelObj, map, mapObj, moving = false;
 
 initTouchUI(control, touch);
@@ -340,14 +340,4 @@ function start() {
 		alert(document.body.clientWidth+' & '+document.body.clientHeight+' & '+stage.clientWidth);
 		}, false);
 	*/
-}
-
-function deepCopy(p,c) {
-	var c = c||{};
-	for (var i in p) {
-	  if (typeof p[i] === 'object') {
-		c[i] = (p[i].constructor === Array)?[]:{};
-		deepCopy(p[i],c[i]);
-	  } else c[i] = p[i];}
-	return c;
 }
