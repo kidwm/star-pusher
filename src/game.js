@@ -3,6 +3,17 @@ import { Graph } from "./graph.js";
 import Hammer from "./hammer.js";
 import { PxLoader } from "./pxloader.js";
 import "./ios-orientationchange-fix.js";
+import {
+	TILEWIDTH,
+	TILEHEIGHT,
+	TILEFLOORHEIGHT,
+	OUTSIDE_DECORATION_PCT,
+	UP,
+	DOWN,
+	LEFT,
+	RIGHT,
+	FILES
+} from "./constants.js";
 
 var loader = new PxLoader();
 loader.addImage('images/front.png');
@@ -33,16 +44,6 @@ loader.start();
 
 
 // The total width and height of each tile in pixels.
-var TILEWIDTH = 50;
-var TILEHEIGHT = 85;
-var TILEFLOORHEIGHT = 40;
-
-var OUTSIDE_DECORATION_PCT = 0.2;
-
-var UP = 'up';
-var DOWN = 'down';
-var LEFT = 'left';
-var RIGHT = 'right';
 
 var mapNeedsRedraw = false;
 var levelIsComplete = false;
@@ -58,27 +59,10 @@ var animation = true;
 
 var currentLevelIndex = 0;
 
-var files = {
-				'uncovered goal': 'images/RedSelector.png',
-				'covered goal': 'images/Selector.png',
-				'star': 'images/Star.png',
-				'corner': 'images/Wall_Block_Tall.png',
-				'wall': 'images/Wood_Block_Tall.png',
-				'inside floor': 'images/Plain_Block.png',
-				'outside floor': 'images/Grass_Block.png',
-				'front': 'images/front.png',
-				'back': 'images/back.png',
-				'left': 'images/left.png',
-				'right': 'images/right.png',
-				'rock': 'images/Rock.png',
-				'short tree': 'images/Tree_Short.png',
-				'tall tree': 'images/Tree_Tall.png',
-				'ugly tree': 'images/Tree_Ugly.png'
-			};
 var IMAGESDICT = {};
-for(var key in files) {
+for(var key in FILES) {
 	IMAGESDICT[key] = new Image();
-	IMAGESDICT[key].src = files[key];
+	IMAGESDICT[key].src = FILES[key];
 	IMAGESDICT[key].width = TILEWIDTH;
 	IMAGESDICT[key].height = TILEHEIGHT;
 }
