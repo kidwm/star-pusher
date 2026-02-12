@@ -22,6 +22,22 @@ export function initMusicUI() {
   ) {
     var melody = document.getElementById("melody");
     var music = document.getElementById("music");
+    var started = false;
+
+    function startMusic() {
+      if (started) {
+        return;
+      }
+      started = true;
+      var playPromise = melody.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(function() {
+          // Autoplay blocked; allow a future user interaction to retry.
+          started = false;
+        });
+      }
+    }
+
     melody.volume = 0.15;
     melody.muted = false;
     music.addEventListener(
@@ -30,6 +46,7 @@ export function initMusicUI() {
         if (melody.muted) {
           melody.muted = false;
           music.classList.add("melody");
+          startMusic();
         } else {
           melody.muted = true;
           music.classList.remove("melody");
@@ -48,6 +65,12 @@ export function initMusicUI() {
     );
     music.classList.add("show");
     music.classList.add("melody");
-    melody.play();
+
+    document.addEventListener("pointerdown", startMusic, { once: true });
+    document.addEventListener("keydown", startMusic, { once: true });
+
+    return { startMusic: startMusic };
   }
+
+  return { startMusic: function() {} };
 }
