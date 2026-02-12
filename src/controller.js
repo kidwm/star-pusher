@@ -8,6 +8,7 @@ export function createGameActions(options) {
   var pathing = options.pathing;
   var audio = options.audio;
   var input = options.input;
+  var directions = options.directions;
 
   function redraw() {
     render.drawStage(
@@ -70,19 +71,19 @@ export function createGameActions(options) {
         audio.playSound("select");
         break;
       case 37:
-        state.playerMoveTo = options.directions.LEFT;
+        state.playerMoveTo = directions.LEFT;
         state.currentImage = 2;
         break;
       case 38:
-        state.playerMoveTo = options.directions.UP;
+        state.playerMoveTo = directions.UP;
         state.currentImage = 1;
         break;
       case 39:
-        state.playerMoveTo = options.directions.RIGHT;
+        state.playerMoveTo = directions.RIGHT;
         state.currentImage = 3;
         break;
       case 40:
-        state.playerMoveTo = options.directions.DOWN;
+        state.playerMoveTo = directions.DOWN;
         state.currentImage = 0;
         break;
       case 66:
@@ -198,11 +199,61 @@ export function createGameActions(options) {
     }
   }
 
+  function start(options) {
+    var bindUIControls = options.bindUIControls;
+    var toggleFullscreen = options.toggleFullscreen;
+    var animationState = options.animationState;
+    var cloudRenderer = options.cloudRenderer;
+
+    dom.title.classList.remove("hidden");
+    dom.info.classList.remove("hidden");
+    reset();
+    document.addEventListener("keydown", run, false);
+    bindUIControls({
+      title: dom.title,
+      splash: dom.splash,
+      info: dom.info,
+      stage: assets.stage,
+      resetButton: dom.resetButton,
+      nextButton: dom.nextButton,
+      prevButton: dom.prevButton,
+      undoButton: dom.undoButton,
+      onRun: function(ev) {
+        if (!state.moving) {
+          run(ev);
+        }
+      },
+      onMove: function(ev) {
+        if (!state.moving) {
+          move(ev);
+        }
+      },
+      onEgg: function() {
+        if (confirm("Open Animation?")) {
+          animationState.enabled = true;
+          cloudRenderer.drawCloud();
+        } else {
+          animationState.enabled = false;
+        }
+      }
+    });
+
+    if (
+      typeof document.cancelFullScreen != "undefined" ||
+      typeof document.mozCancelFullScreen != "undefined" ||
+      typeof document.webkitCancelFullScreen != "undefined"
+    ) {
+      dom.fullscreen.addEventListener("click", toggleFullscreen, false);
+      dom.fullscreen.classList.add("show");
+    }
+  }
+
   return {
     run: run,
     reset: reset,
     prev: prev,
     next: next,
-    move: move
+    move: move,
+    start: start
   };
 }

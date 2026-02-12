@@ -89,6 +89,10 @@ var title = document.getElementById('title');
 var splash = document.getElementById('splash');
 var control = document.getElementById('control');
 var touch = document.getElementById('touch');
+var resetButton = document.getElementById('reset');
+var nextButton = document.getElementById('next');
+var prevButton = document.getElementById('prev');
+var undoButton = document.getElementById('undo');
 var data = document.getElementById('data');
 var lines = data.innerHTML + '\n';
 var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, structuredClone);
@@ -107,7 +111,12 @@ var actions = createGameActions({
 	dom: {
 		title: title,
 		splash: splash,
-		info: info
+		info: info,
+		fullscreen: fullscreen,
+		resetButton: resetButton,
+		nextButton: nextButton,
+		prevButton: prevButton,
+		undoButton: undoButton
 	},
 	render: {
 		drawMap: drawMap,
@@ -178,44 +187,12 @@ initHammer(document.documentElement, function(direction) {
 initMusicUI();
 
 function start() {
-	title.classList.remove('hidden');
-	info.classList.remove('hidden');
-	actions.reset();
-	document.addEventListener('keydown', actions.run, false);
-	bindUIControls({
-		title: title,
-		splash: splash,
-		info: info,
-		stage: stage,
-		resetButton: document.getElementById('reset'),
-		nextButton: document.getElementById('next'),
-		prevButton: document.getElementById('prev'),
-		undoButton: document.getElementById('undo'),
-		onRun: function(ev) {
-			if (!state.moving) {
-				actions.run(ev);
-			}
-		},
-		onMove: function(ev) {
-			if (!state.moving) {
-				actions.move(ev);
-			}
-		},
-		onEgg: function() {
-			if (confirm('Open Animation?')) {
-				animationState.enabled = true;
-				cloudRenderer.drawCloud();
-			} else {
-				animationState.enabled = false;
-			}
-		}
+	actions.start({
+		bindUIControls: bindUIControls,
+		toggleFullscreen: toggleFullscreen,
+		animationState: animationState,
+		cloudRenderer: cloudRenderer
 	});
-	if (typeof document.cancelFullScreen != 'undefined' ||
-		typeof document.mozCancelFullScreen != 'undefined' ||
-		typeof document.webkitCancelFullScreen != 'undefined') {
-		fullscreen.addEventListener('click', toggleFullscreen, false);
-		fullscreen.classList.add('show');
-	}
 	/*
 	window.addEventListener('orientationchange', function() {
 		alert(document.body.clientWidth+' & '+document.body.clientHeight+' & '+stage.clientWidth);
