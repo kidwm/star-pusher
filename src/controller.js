@@ -8,6 +8,7 @@ export function createGameActions(options) {
   var audio = options.audio;
   var input = options.input;
   var directions = options.directions;
+  var keys = options.keys;
 
   function redraw() {
     render.drawStage(
@@ -48,7 +49,7 @@ export function createGameActions(options) {
       return;
     }
 
-    if ([8, 27, 37, 38, 39, 40, 66, 78].indexOf(ev.which) >= 0) {
+    if (keys.movement.indexOf(ev.which) >= 0) {
       ev.preventDefault();
       if (store.moving) {
         return;
@@ -56,7 +57,7 @@ export function createGameActions(options) {
     }
 
     switch (key) {
-      case 8:
+      case keys.codes.BACKSPACE:
         if (store.levelObj["steps"].length > 1) {
           store.levelObj["steps"].pop();
           store.levelObj["startState"] = structuredClone(
@@ -65,31 +66,31 @@ export function createGameActions(options) {
           store.mapNeedsRedraw = true;
         }
         break;
-      case 27:
+      case keys.codes.ESC:
         reset();
         audio.playSound("select");
         break;
-      case 37:
+      case keys.codes.LEFT:
         store.playerMoveTo = directions.LEFT;
         store.currentImage = 2;
         break;
-      case 38:
+      case keys.codes.UP:
         store.playerMoveTo = directions.UP;
         store.currentImage = 1;
         break;
-      case 39:
+      case keys.codes.RIGHT:
         store.playerMoveTo = directions.RIGHT;
         store.currentImage = 3;
         break;
-      case 40:
+      case keys.codes.DOWN:
         store.playerMoveTo = directions.DOWN;
         store.currentImage = 0;
         break;
-      case 66:
+      case keys.codes.B:
         prev();
         audio.playSound("select");
         break;
-      case 78:
+      case keys.codes.N:
         next();
         audio.playSound("select");
         break;
@@ -161,13 +162,13 @@ export function createGameActions(options) {
     var playery = store.levelObj["startState"]["player"][1];
 
     if (clickx == playerx - 1 && clicky == playery) {
-      run(37);
+      run(keys.codes.LEFT);
     } else if (clickx == playerx && clicky == playery - 1) {
-      run(38);
+      run(keys.codes.UP);
     } else if (clickx == playerx + 1 && clicky == playery) {
-      run(39);
+      run(keys.codes.RIGHT);
     } else if (clickx == playerx && clicky == playery + 1) {
-      run(40);
+      run(keys.codes.DOWN);
     } else if (
       logic.isBlocked(store.mapObj, store.levelObj["startState"], clickx, clicky) ||
       store.mapObj[clickx][clicky] == " "

@@ -9,6 +9,28 @@ export const DOWN = "down";
 export const LEFT = "left";
 export const RIGHT = "right";
 
+export const KEY_CODES = {
+  BACKSPACE: 8,
+  ESC: 27,
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40,
+  B: 66,
+  N: 78
+};
+
+export const MOVEMENT_KEYS = [
+  KEY_CODES.BACKSPACE,
+  KEY_CODES.ESC,
+  KEY_CODES.LEFT,
+  KEY_CODES.UP,
+  KEY_CODES.RIGHT,
+  KEY_CODES.DOWN,
+  KEY_CODES.B,
+  KEY_CODES.N
+];
+
 export const FILES = {
   "uncovered goal": "images/RedSelector.png",
   "covered goal": "images/Selector.png",

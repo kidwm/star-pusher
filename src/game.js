@@ -33,7 +33,9 @@ import {
 	UP,
 	DOWN,
 	LEFT,
-	RIGHT
+	RIGHT,
+	KEY_CODES,
+	MOVEMENT_KEYS
 } from "./constants.js";
 
 // The total width and height of each tile in pixels.
@@ -120,6 +122,10 @@ var actions = createGameActions({
 		DOWN: DOWN,
 		LEFT: LEFT,
 		RIGHT: RIGHT
+	},
+	keys: {
+		codes: KEY_CODES,
+		movement: MOVEMENT_KEYS
 	}
 });
 
@@ -131,16 +137,16 @@ initHammer(document.documentElement, function(direction) {
 	}
 	switch(direction) {
 		case LEFT:
-			actions.run(37);
+			actions.run(KEY_CODES.LEFT);
 			break;
 		case UP:
-			actions.run(38);
+			actions.run(KEY_CODES.UP);
 			break;
 		case RIGHT:
-			actions.run(39);
+			actions.run(KEY_CODES.RIGHT);
 			break;
 		case DOWN:
-			actions.run(40);
+			actions.run(KEY_CODES.DOWN);
 			break;
 	}
 });
