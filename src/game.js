@@ -1,6 +1,5 @@
 import astar from "./astar.js";
 import { Graph } from "./graph.js";
-import { PxLoader } from "./pxloader.js";
 import "./ios-orientationchange-fix.js";
 import { installRequestAnimFrame } from "./animation.js";
 import { initMusicUI, playSound } from "./audio.js";
@@ -13,6 +12,7 @@ import {
 } from "./input.js";
 import { parseLevels } from "./levels.js";
 import { createGameActions } from "./controller.js";
+import { initLoader } from "./loader.js";
 import {
 	isWall,
 	isBlocked,
@@ -34,34 +34,6 @@ import {
 	LEFT,
 	RIGHT
 } from "./constants.js";
-
-var loader = new PxLoader();
-loader.addImage('images/front.png');
-loader.addImage('images/back.png');
-loader.addImage('images/left.png');
-loader.addImage('images/right.png');
-loader.addImage('images/Grass_Block.png');
-loader.addImage('images/Plain_Block.png');
-loader.addImage('images/RedSelector.png');
-loader.addImage('images/Rock.png');
-loader.addImage('images/Selector.png');
-loader.addImage('images/Star.png');
-loader.addImage('images/Tree_Short.png');
-loader.addImage('images/Tree_Tall.png');
-loader.addImage('images/Tree_Ugly.png');
-loader.addImage('images/Wall_Block_Tall.png');
-loader.addImage('images/Wood_Block_Tall.png');
-loader.addProgressListener(function(e) {
-	if (e.completedCount * 6 < 100) {
-		document.getElementById('loading').querySelector('span').textContent = e.completedCount * 6 + '%';
-	}
-});
-loader.addCompletionListener(function() {
-	document.getElementById('loading').classList.add('hidden');
-	start();
-});
-loader.start();
-
 
 // The total width and height of each tile in pixels.
 
@@ -199,3 +171,5 @@ function start() {
 		}, false);
 	*/
 }
+
+initLoader(start);
