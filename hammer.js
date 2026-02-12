@@ -728,3 +728,5 @@ function Hammer(element, options, undefined)
         }
     }
 }
+
+export default Hammer;

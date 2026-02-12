@@ -3,7 +3,9 @@
 // Freely distributable under the MIT License.
 // Implements the astar search algorithm in javascript using a binary heap.
 
-var astar = {
+import { BinaryHeap } from "./graph.js";
+
+const astar = {
     init: function(grid) {
         for(var x = 0, xl = grid.length; x < xl; x++) {
             for(var y = 0, yl = grid[x].length; y < yl; y++) {
@@ -150,3 +152,5 @@ var astar = {
         return ret;
     }
 };
+
+export default astar;

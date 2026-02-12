@@ -181,3 +181,5 @@ BinaryHeap.prototype = {
         }
     }
 };
+
+export { Graph, GraphNode, GraphNodeType, BinaryHeap };

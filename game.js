@@ -1,4 +1,8 @@
-'use strict'
+import astar from "./astar.js";
+import { Graph } from "./graph.js";
+import Hammer from "./hammer.js";
+import { PxLoader } from "./pxloader.js";
+import "./ios-orientationchange-fix.js";
 
 var loader = new PxLoader();
 loader.addImage('images/front.png');
@@ -718,4 +722,3 @@ function cancelFullscreen() {
 	    document.webkitCancelFullScreen();
 	}
 }
-

@@ -471,3 +471,5 @@ PxLoader.prototype.addImage = function(url, tags, priority) {
     // return the img element to the caller
     return imageLoader.img;
 };
+
+export { PxLoader, PxLoaderImage };
