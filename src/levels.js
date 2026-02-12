@@ -1,6 +1,9 @@
 import { decorateMap } from "./render.js";
 
-export function parseLevels(lines, isWall, outsideDecoMapping, deepCopy) {
+export function parseLevels(lines, isWall, outsideDecoMapping, deepCopy, notify) {
+  var notifyFn = typeof notify === "function" ? notify : function(message) {
+    alert(message);
+  };
   var levels = [];
   var levelNum = -1;
   var mapTextLines = [];
@@ -53,7 +56,7 @@ export function parseLevels(lines, isWall, outsideDecoMapping, deepCopy) {
       var lineNum = index - mapObj[0].length;
 
       if (startx == null || starty == null) {
-        alert(
+        notifyFn(
           "Level " +
             (levelNum + 1) +
             " (around line " +
@@ -62,7 +65,7 @@ export function parseLevels(lines, isWall, outsideDecoMapping, deepCopy) {
         );
       }
       if (goals.length < 1) {
-        alert(
+        notifyFn(
           "Level " +
             (levelNum + 1) +
             " (around line " +
@@ -71,7 +74,7 @@ export function parseLevels(lines, isWall, outsideDecoMapping, deepCopy) {
         );
       }
       if (stars.length < goals.length) {
-        alert(
+        notifyFn(
           "Level " +
             (levelNum + 1) +
             " (around line " +

@@ -14,6 +14,7 @@ import { parseLevels } from "./levels.js";
 import { createGameActions } from "./controller.js";
 import { createStore } from "./store.js";
 import { initLoader } from "./loader.js";
+import { createNotifier } from "./ui.js";
 import {
 	isWall,
 	isBlocked,
@@ -70,7 +71,8 @@ var prevButton = document.getElementById('prev');
 var undoButton = document.getElementById('undo');
 var data = document.getElementById('data');
 var lines = data.innerHTML + '\n';
-var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, structuredClone);
+var notifier = createNotifier();
+var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, structuredClone, notifier.show);
 var store = createStore(levels);
 
 var actions = createGameActions({
