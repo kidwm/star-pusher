@@ -1,3 +1,21 @@
+var MUSIC_MUTED_KEY = "star-pusher.music-muted";
+
+function loadMutedPreference() {
+  try {
+    return window.localStorage.getItem(MUSIC_MUTED_KEY) === "1";
+  } catch (_err) {
+    return false;
+  }
+}
+
+function saveMutedPreference(isMuted) {
+  try {
+    window.localStorage.setItem(MUSIC_MUTED_KEY, isMuted ? "1" : "0");
+  } catch (_err) {
+    // Ignore storage failures (private mode / blocked storage).
+  }
+}
+
 export function playSound(filename) {
   var index = ["intro", "select", "match", "applause"].indexOf(filename);
   var sound = document.querySelectorAll("audio.sound")[index];
@@ -23,6 +41,7 @@ export function initMusicUI() {
     var melody = document.getElementById("melody");
     var music = document.getElementById("music");
     var started = false;
+    var isMuted = loadMutedPreference();
 
     function startMusic() {
       if (started) {
@@ -39,17 +58,24 @@ export function initMusicUI() {
     }
 
     melody.volume = 0.15;
-    melody.muted = false;
+    melody.muted = isMuted;
+    if (melody.muted) {
+      music.classList.remove("melody");
+    } else {
+      music.classList.add("melody");
+    }
     music.addEventListener(
       "click",
       function() {
         if (melody.muted) {
           melody.muted = false;
           music.classList.add("melody");
+          saveMutedPreference(false);
           startMusic();
         } else {
           melody.muted = true;
           music.classList.remove("melody");
+          saveMutedPreference(true);
         }
       },
       false
@@ -64,10 +90,11 @@ export function initMusicUI() {
       false
     );
     music.classList.add("show");
-    music.classList.add("melody");
 
-    document.addEventListener("pointerdown", startMusic, { once: true });
-    document.addEventListener("keydown", startMusic, { once: true });
+    if (!melody.muted) {
+      document.addEventListener("pointerdown", startMusic, { once: true });
+      document.addEventListener("keydown", startMusic, { once: true });
+    }
 
     return { startMusic: startMusic };
   }
