@@ -76,20 +76,47 @@ export function followPath(path, options) {
   var store = options.store;
   var keyCodes = options.keyCodes;
   var runMoveByKey = options.runMoveByKey;
+  var stepIntervalMs = options.stepIntervalMs || 100;
+
+  if (!path || path.length === 0) {
+    store.moving = false;
+    return;
+  }
 
   store.moving = true;
-  path.forEach(function(node, index, array) {
-    setTimeout(function() {
+  var nextStepIndex = 0;
+  var lastFrameTs = null;
+  var accumulatedMs = 0;
+
+  function tick(ts) {
+    if (!store.moving) {
+      return;
+    }
+    if (lastFrameTs == null) {
+      lastFrameTs = ts;
+    }
+    accumulatedMs += ts - lastFrameTs;
+    lastFrameTs = ts;
+
+    while (accumulatedMs >= stepIntervalMs && nextStepIndex < path.length) {
+      accumulatedMs -= stepIntervalMs;
+      var node = path[nextStepIndex];
       var player = store.levelObj["startState"]["player"];
       var keyCode = keyCodeFromStep(player[0], player[1], node.x, node.y, keyCodes);
       if (keyCode != null) {
         runMoveByKey(keyCode);
       }
-      if (index == array.length - 1) {
-        store.moving = false;
-      }
-    }, 100 * index);
-  });
+      nextStepIndex += 1;
+    }
+
+    if (nextStepIndex >= path.length) {
+      store.moving = false;
+      return;
+    }
+    window.requestAnimationFrame(tick);
+  }
+
+  window.requestAnimationFrame(tick);
 }
 
 function keyCodeFromStep(fromX, fromY, toX, toY, keyCodes) {
