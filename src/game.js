@@ -13,6 +13,14 @@ import {
 } from "./input.js";
 import { parseLevels } from "./levels.js";
 import {
+	isWall,
+	isBlocked,
+	hasItem,
+	isLevelFinished,
+	makeMove,
+	makeGrid
+} from "./state.js";
+import {
 	initImages,
 	createCloudRenderer,
 	drawMap,
@@ -83,81 +91,6 @@ var playerImages = imageState.playerImages;
 var currentImage = 0;
 var cloudRenderer = createCloudRenderer(sky, cloud, animationState);
 
-var isLevelFinished = function(levelObj, gameStateObj) {
-	var result = true;
-    levelObj['goals'].forEach(function(element, index, array) {
-    	var goal = element;
-    	if (gameStateObj['stars'].every(function(element, index, array) {
-			return element[0] != goal[0] || element[1] != goal[1];
-		})) 
-            result = false;
-	});
-    return result;
-}
-
-var isWall = function(mapObj, x, y) {
-    if (x < 0 || x >= mapObj.length || y < 0 || y >= mapObj[x].length)
-        return false;
-    else if (['#', 'x'].indexOf(mapObj[x][y]) >= 0)
-        return true;
-    return false;
-}
-
-var isBlocked = function(mapObj, gameStateObj, x, y) {
-    if (isWall(mapObj, x, y))
-        return true;
-    else if (x < 0 || x >= mapObj.length || y < 0 || y >= mapObj[x].length)
-        return true;
-    else if (gameStateObj['stars'].some(function(element, index, array) {
-			return element[0] == x && element[1] == y;
-		}))
-        return true;
-    return false;
-}
-
-var makeMove = function (mapObj, gameStateObj, playerMoveTo) {
-    var playerx = gameStateObj['player'][0];
-    var playery = gameStateObj['player'][1];
-    var stars = gameStateObj['stars'];
-	var xOffset, yOffset;
-	switch(playerMoveTo) {
-		case UP:
-			xOffset = 0;
-		    yOffset = -1;
-			break;
-		case RIGHT:
-			xOffset = 1;
-		    yOffset = 0;
-			break;
-		case DOWN:
-			xOffset = 0;
-		    yOffset = 1;
-			break;
-		case LEFT:
-			xOffset = -1;
-	        yOffset = 0;
-			break;
-	}
-
-    if (isWall(mapObj, playerx + xOffset, playery + yOffset))
-        return false;
-    else {
-        if (hasItem(stars, playerx + xOffset, playery + yOffset)) {
-            if (!isBlocked(mapObj, gameStateObj, playerx + (xOffset*2), playery + (yOffset*2)))
-                stars.forEach(function(element, index, array) {
-					if (element[0] == playerx + xOffset && element[1] == playery + yOffset) {
-						array[index] = [array[index][0] + xOffset, array[index][1] + yOffset];
-						if (hasItem(levelObj['goals'], array[index][0], array[index][1]))
-							playSound('match');
-					}
-                });
-			else
-                return false;
-        }
-        gameStateObj['player'] = [playerx + xOffset, playery + yOffset];
-        return true;
-	}
-}
 
 var run = function(ev) {
 	var key = ev.which ? ev.which : ev;
@@ -223,7 +156,13 @@ var run = function(ev) {
 		}
 	}
 	if (playerMoveTo != null && !levelIsComplete) {
-            var moved = makeMove(mapObj, gameStateObj, playerMoveTo);
+            var moved = makeMove(mapObj, gameStateObj, playerMoveTo, {
+				isWall: isWall,
+				isBlocked: isBlocked,
+				hasItem: hasItem,
+				playSound: playSound,
+				goals: levelObj['goals']
+			});
             if (moved) {
             	if (!moving) {
                 	levelObj['steps'].push(deepCopy(gameStateObj));
@@ -300,7 +239,9 @@ var move = function(ev) {
 	else if(isBlocked(mapObj, levelObj['startState'], clickx, clicky) || mapObj[clickx][clicky] == ' ')
 		return
 	else {
-		var graph = new Graph(makeGrid(mapObj));
+		var graph = new Graph(makeGrid(mapObj, levelObj, function(mapObjLocal, state, x, y) {
+			return isBlocked(mapObjLocal, state, x, y);
+		}));
 		var start = graph.nodes[playerx][playery];
 		var end = graph.nodes[clickx][clicky];
 		var result = astar.search(graph.nodes, start, end);
@@ -399,27 +340,6 @@ function start() {
 		alert(document.body.clientWidth+' & '+document.body.clientHeight+' & '+stage.clientWidth);
 		}, false);
 	*/
-}
-
-function hasItem (array, itemx, itemy) {
-	return array.some(function(element, index, array) {
-    	return element[0] == itemx && element[1] == itemy;
-    });
-}
-
-function makeGrid(mapObj) {
-	var grid = [];
-	for (var x = 0; x < mapObj.length; x++) {
-		grid.push([]);
-	}			
-	for (var x = 0; x < mapObj.length; x++)
-		for (var y = 0; y < mapObj[0].length; y++) {
-			if(isBlocked(mapObj, levelObj['startState'], x, y))
-				grid[x].push(1);
-			else
-				grid[x].push(0);
-		}
-	return grid;
 }
 
 function deepCopy(p,c) {
