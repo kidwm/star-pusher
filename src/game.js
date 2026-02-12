@@ -11,6 +11,7 @@ import {
 	bindUIControls,
 	getMoveFromClick
 } from "./input.js";
+import { parseLevels } from "./levels.js";
 import {
 	initImages,
 	createCloudRenderer,
@@ -156,85 +157,6 @@ var makeMove = function (mapObj, gameStateObj, playerMoveTo) {
         gameStateObj['player'] = [playerx + xOffset, playery + yOffset];
         return true;
 	}
-}
-
-var parser = function(lines) {
-	var levels = [];
-    var levelNum = -1;
-    var mapTextLines = [];
-    var mapObj = [];
-	lines.forEach(function(element, index, array) {
-		var line = element.replace(/;.*$/, '');
-		if (line != '') {
-			mapTextLines.push(line);
-		} else if (line == '' && mapTextLines.length > 0) {
-			var maxWidth = -1;
-			mapTextLines.forEach(function(element, index, array) {
-				if (element.length > maxWidth) {
-					maxWidth = element.length;
-				}
-			});
-			mapTextLines.forEach(function(element, index, array) {
-				for (var i = 0; i < (maxWidth - element.length); i++)
-					array[index] += ' ';
-			});
-			for (var i = 0; i < maxWidth; i++) {
-				mapObj.push([]);
-			};
-			for (var y = 0; y < mapTextLines.length; y++) {
-				for (var x = 0; x < maxWidth; x++) {
-					mapObj[x].push(mapTextLines[y][x]);						
-				};
-			};
-			var startx = null;
-            var starty = null;
-            var goals = [];
-            var stars = [];
-            for (x = 0; x < maxWidth; x++) {
-				for (y = 0; y < mapObj[x].length; y++) {
-					if (mapObj[x][y] == '@' || mapObj[x][y] == '+') {
-	                    startx = x;
-	                    starty = y;
-                    }
-                    if (mapObj[x][y] == '.' || mapObj[x][y] == '+' || mapObj[x][y] == '*') {
-                    	goals.push([x, y]);
-                    }
-                    if (mapObj[x][y] == '$' || mapObj[x][y] == '*') {
-                        stars.push([x, y]);
-	                }
-				};
-			};
-			
-			var lineNum = index - mapObj[0].length;
-			
-			if (startx == null || starty == null)
-				alert('Level ' + (levelNum + 1) + ' (around line ' + lineNum + ') is missing a "@" or "+" to mark the start point.');
-            if (goals.length < 1)
-            	alert('Level ' + (levelNum + 1) + ' (around line ' + lineNum + ') must have at least one goal.');
-            if (stars.length < goals.length) 
-            	alert('Level ' + (levelNum + 1) + ' (around line ' + lineNum + ') is impossible to solve. It has ' + goals.length + ' goals but only ' + stars.length + ' stars.');
-			
-            var gameStateObj = {
-				'player': [startx, starty],
-				'stars': stars
-			}
-			var levelObj = {
-				'width': maxWidth,
-				'height': mapObj.length,
-				'mapObj': decorateMap(mapObj, gameStateObj['player'], isWall, outsideDecoMapping),
-				'goals': goals,
-				'startState': gameStateObj,
-				'steps': [deepCopy(gameStateObj)]
-			}
-
-			levels.push(levelObj);
-			mapTextLines = [];
-			mapObj = [];
-			gameStateObj = {};
-			levelNum += 1;
-		}
-	});
-    return levels;
 }
 
 var run = function(ev) {
@@ -406,7 +328,7 @@ var control = document.getElementById('control');
 var touch = document.getElementById('touch');
 var data = document.getElementById('data');
 var lines = data.innerHTML + '\n';
-var levels = parser(lines.split(/\n/));
+var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, deepCopy);
 var levelObj, map, mapObj, moving = false;
 
 initTouchUI(control, touch);
