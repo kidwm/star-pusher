@@ -4,7 +4,6 @@ import { initMusicUI, playSound } from "./audio.js";
 import { toggleFullscreen } from "./fullscreen.js";
 import {
 	initTouchUI,
-	initHammer,
 	bindUIControls,
 	bindPanControls,
 	getMoveFromClick
@@ -129,26 +128,6 @@ var actions = createGameActions({
 });
 
 initTouchUI(control, touch);
-
-initHammer(document.documentElement, function(direction) {
-	if (store.moving) {
-		return;
-	}
-	switch(direction) {
-		case LEFT:
-			actions.run(KEY_CODES.LEFT);
-			break;
-		case UP:
-			actions.run(KEY_CODES.UP);
-			break;
-		case RIGHT:
-			actions.run(KEY_CODES.RIGHT);
-			break;
-		case DOWN:
-			actions.run(KEY_CODES.DOWN);
-			break;
-	}
-});
 
 bindPanControls(stage, {
 	canPan: function() {

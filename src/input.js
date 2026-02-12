@@ -1,6 +1,4 @@
-import Hammer from "./hammer.js";
 import { TILEWIDTH, TILEHEIGHT, TILEFLOORHEIGHT } from "./constants.js";
-import { UP, DOWN, LEFT, RIGHT } from "./constants.js";
 
 export function initTouchUI(control, touch) {
   if (window.Touch || "ontouchstart" in window) {
@@ -8,32 +6,6 @@ export function initTouchUI(control, touch) {
   } else {
     control.classList.add("show");
   }
-}
-
-export function initHammer(element, onDirection) {
-  var hammer = new Hammer(element);
-  document.ontouchmove = function(event) {
-    if (event.touches.length == 1) {
-      event.preventDefault(); // Disables touch-scrolling AND pinch-to-zoom when called here.
-    }
-  };
-  hammer.onswipe = function(ev) {
-    switch (ev.direction) {
-      case "left":
-        onDirection(LEFT);
-        break;
-      case "up":
-        onDirection(UP);
-        break;
-      case "right":
-        onDirection(RIGHT);
-        break;
-      case "down":
-        onDirection(DOWN);
-        break;
-    }
-  };
-  return hammer;
 }
 
 export function bindUIControls(options) {
