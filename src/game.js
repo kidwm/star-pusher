@@ -3,16 +3,23 @@ import { Graph } from "./graph.js";
 import Hammer from "./hammer.js";
 import { PxLoader } from "./pxloader.js";
 import "./ios-orientationchange-fix.js";
+import { installRequestAnimFrame } from "./animation.js";
+import { initMusicUI, playSound } from "./audio.js";
+import { toggleFullscreen } from "./fullscreen.js";
+import {
+	initImages,
+	createCloudRenderer,
+	drawMap,
+	drawStage,
+	decorateMap
+} from "./render.js";
 import {
 	TILEWIDTH,
-	TILEHEIGHT,
 	TILEFLOORHEIGHT,
-	OUTSIDE_DECORATION_PCT,
 	UP,
 	DOWN,
 	LEFT,
-	RIGHT,
-	FILES
+	RIGHT
 } from "./constants.js";
 
 var loader = new PxLoader();
@@ -55,128 +62,20 @@ var map = document.createElement('canvas');
 var position = stage.getContext('2d');
 var cloud = sky.getContext('2d');
 var platform = map.getContext('2d');
-var animation = true;
+var animationState = { enabled: true };
+
+installRequestAnimFrame();
 
 var currentLevelIndex = 0;
 
-var IMAGESDICT = {};
-for(var key in FILES) {
-	IMAGESDICT[key] = new Image();
-	IMAGESDICT[key].src = FILES[key];
-	IMAGESDICT[key].width = TILEWIDTH;
-	IMAGESDICT[key].height = TILEHEIGHT;
-}
-var TILEMAPPING = {
-		'x': IMAGESDICT['corner'],
-		'#': IMAGESDICT['wall'],
-		'o': IMAGESDICT['inside floor'],
-		' ': IMAGESDICT['outside floor']
-};
-			
-var OUTSIDEDECOMAPPING = {
-	'1': IMAGESDICT['rock'],
-	'2': IMAGESDICT['short tree'],
-	'3': IMAGESDICT['tall tree'],
-	'4': IMAGESDICT['ugly tree']
-}
+var imageState = initImages();
+var images = imageState.images;
+var tileMapping = imageState.tileMapping;
+var outsideDecoMapping = imageState.outsideDecoMapping;
+var playerImages = imageState.playerImages;
 
 var currentImage = 0;
-var PLAYERIMAGES = [IMAGESDICT['front'],
-                    IMAGESDICT['back'],
-                    IMAGESDICT['left'],
-                    IMAGESDICT['right']];
-
-
-var clouds = 10, circles = [];
-for (var i = 0; i < clouds; i++) {
-	circles.push([
-		Math.random() * sky.width,
-		Math.random() * sky.height,
-		0,
-		Math.floor(Math.random() * (80-50+1)+50 * 100)
-	]);
-}
-var drawCloud = function() {
-	sky.width = document.documentElement.clientWidth; //clean the canvas
-	sky.height = document.documentElement.clientHeight;
-	if (!animation)
-		return;
-	for (var i = 0; i < clouds; i++) {
-		if (circles[i][1] - circles[i][2] > sky.height) {
-		  circles[i][0] = Math.random() * sky.width;
-		  circles[i][2] = Math.random() * 100;
-		  circles[i][1] = 0 - circles[i][2];
-		  circles[i][3] = Math.random() / 2;
-		} else {
-		  circles[i][1] += 5;
-		}
-		cloud.fillStyle = 'rgba(255, 255, 255, ' + circles[i][3] + ')';
-		cloud.beginPath();
-		cloud.arc(circles[i][0], circles[i][1], circles[i][2], 0, Math.PI * 2, true);
-		cloud.closePath();
-		cloud.fill();
-	}	
-	requestAnimFrame(function(){
-	    drawCloud();
-	});
-}
-
-var drawMap = function() {
-	var mapObj = levelObj['mapObj'];
-	var baseTile;
-	map.width = mapObj.length * TILEWIDTH;
-	map.height = (mapObj[0].length - 1) * TILEFLOORHEIGHT + TILEHEIGHT;
-	for (var x = 0; x < mapObj.length; x++) {
-		for (var y = 0; y < mapObj[0].length; y++) {
-			var tx = x * TILEWIDTH, ty = y * TILEFLOORHEIGHT;
-			if (TILEMAPPING[mapObj[x][y]])
-                baseTile = TILEMAPPING[mapObj[x][y]];
-            else if (OUTSIDEDECOMAPPING[mapObj[x][y]])
-                baseTile = TILEMAPPING[' '];
-			platform.drawImage(baseTile, tx, ty);
-			if (OUTSIDEDECOMAPPING[mapObj[x][y]]) {
-                platform.drawImage(OUTSIDEDECOMAPPING[mapObj[x][y]], tx, ty);
-            }
-		}
-	}
-}
-
-var drawStage = function() {
-	var gameStateObj = levelObj['startState'];
-	var goals = levelObj['goals'];
-	stage.width = map.width;
-	stage.height = map.height;
-	position.drawImage(map, 0, 0);
-	var revamp = function(x, y) {
-		if (mapObj[x][y + 1] == 'x' || mapObj[x][y + 1] == '#') {
-	   		position.drawImage(
-	   			TILEMAPPING[mapObj[x][y + 1]],
-	   			0, 0,
-	   			TILEWIDTH, TILEFLOORHEIGHT,
-	   			tx, ty + TILEFLOORHEIGHT,
-	   			TILEWIDTH, TILEFLOORHEIGHT
-	   		);
-	   	}
-	}
-	for (var x = 0; x < mapObj.length; x++) {
-		for (var y = 0; y < mapObj[0].length; y++) {
-			var tx = x * TILEWIDTH, ty = y * TILEFLOORHEIGHT;
-			if (hasItem(gameStateObj['stars'], x, y)) {
-		        if (hasItem(goals, x, y))
-		            position.drawImage(IMAGESDICT['covered goal'], tx, ty);
-		    	position.drawImage(IMAGESDICT['star'], tx, ty);
-				revamp(x, y);
-            } else if (hasItem(goals, x, y)) {
-                position.drawImage(IMAGESDICT['uncovered goal'], tx, ty);
-   		    	revamp(x, y);
-            }
-            if (gameStateObj['player'][0] == x && gameStateObj['player'][1] == y) {
-                position.drawImage(PLAYERIMAGES[currentImage], tx, ty);
-   		    	revamp(x, y);
-            }
-		}
-	}
-}
+var cloudRenderer = createCloudRenderer(sky, cloud, animationState);
 
 var isLevelFinished = function(levelObj, gameStateObj) {
 	var result = true;
@@ -197,39 +96,6 @@ var isWall = function(mapObj, x, y) {
         return true;
     return false;
 }
-
-var decorateMap = function(mapObj, startxy) {
-    var startx = startxy[0];
-    var starty = startxy[1];
-    
-    var mapObjCopy = mapObj; //.slice(0);
-
-    for (var x = 0; x < mapObjCopy.length; x++) {
-		for (var y = 0; y < mapObjCopy[0].length; y++) {
-            if (['$', '.', '@', '+', '*'].indexOf(mapObjCopy[x][y]) >= 0) {
-                mapObjCopy[x][y] = ' ';
-            }
-    	}
-	}
-
-    floodFill(mapObjCopy, startx, starty, ' ', 'o');
-
-	for (x = 0; x < mapObjCopy.length; x++) {
-		for (y = 0; y < mapObjCopy[0].length; y++) {
-			if (mapObjCopy[x][y] == '#') {
-                if ((isWall(mapObjCopy, x, y-1) && isWall(mapObjCopy, x+1, y)) ||
-                   (isWall(mapObjCopy, x+1, y) && isWall(mapObjCopy, x, y+1)) ||
-                   (isWall(mapObjCopy, x, y+1) && isWall(mapObjCopy, x-1, y)) ||
-                   (isWall(mapObjCopy, x-1, y) && isWall(mapObjCopy, x, y-1)))
-                    mapObjCopy[x][y] = 'x';
-			} else if (mapObjCopy[x][y] == ' ' && Math.random() < OUTSIDE_DECORATION_PCT) {
-				var items = Object.keys(OUTSIDEDECOMAPPING);
-				mapObjCopy[x][y] = items[Math.floor(Math.random() * items.length)];
-			}
-		}
-	}
-    return mapObjCopy;
-};
 
 var isBlocked = function(mapObj, gameStateObj, x, y) {
     if (isWall(mapObj, x, y))
@@ -287,19 +153,6 @@ var makeMove = function (mapObj, gameStateObj, playerMoveTo) {
 	}
 }
 
-var floodFill = function(mapObj, x, y, oldCharacter, newCharacter) {
-    if (mapObj[x][y] == oldCharacter)
-        mapObj[x][y] = newCharacter;
-    if (x < mapObj.length - 1 && mapObj[x+1][y] == oldCharacter)
-        floodFill(mapObj, x+1, y, oldCharacter, newCharacter);
-    if (x > 0 && mapObj[x-1][y] == oldCharacter)
-        floodFill(mapObj, x-1, y, oldCharacter, newCharacter);
-    if (y < mapObj[x].length - 1 && mapObj[x][y+1] == oldCharacter)
-        floodFill(mapObj, x, y+1, oldCharacter, newCharacter);
-    if (y > 0 && mapObj[x][y-1] == oldCharacter)
-        floodFill(mapObj, x, y-1, oldCharacter, newCharacter);
-};
-
 var parser = function(lines) {
 	var levels = [];
     var levelNum = -1;
@@ -317,10 +170,10 @@ var parser = function(lines) {
 				}
 			});
 			mapTextLines.forEach(function(element, index, array) {
-				for (i = 0; i < (maxWidth - element.length); i++)
+				for (var i = 0; i < (maxWidth - element.length); i++)
 					array[index] += ' ';
 			});
-			for (i = 0; i < maxWidth; i++) {
+			for (var i = 0; i < maxWidth; i++) {
 				mapObj.push([]);
 			};
 			for (var y = 0; y < mapTextLines.length; y++) {
@@ -363,7 +216,7 @@ var parser = function(lines) {
 			var levelObj = {
 				'width': maxWidth,
 				'height': mapObj.length,
-				'mapObj': decorateMap(mapObj, gameStateObj['player']),
+				'mapObj': decorateMap(mapObj, gameStateObj['player'], isWall, outsideDecoMapping),
 				'goals': goals,
 				'startState': gameStateObj,
 				'steps': [deepCopy(gameStateObj)]
@@ -457,7 +310,18 @@ var run = function(ev) {
 			}
 	}
 	if (mapNeedsRedraw) {
-		drawStage();
+		drawStage(
+			stage,
+			position,
+			map,
+			mapObj,
+			levelObj,
+			currentImage,
+			images,
+			tileMapping,
+			playerImages,
+			hasItem
+		);
         mapNeedsRedraw = false;
 	}
 };
@@ -467,8 +331,19 @@ var reset = function() {
 	mapObj = levelObj['mapObj'];
 	currentImage = 0;
 	info.querySelector('span').textContent = currentLevelIndex;
-	drawMap();
-	drawStage();
+	drawMap(map, platform, mapObj, tileMapping, outsideDecoMapping);
+	drawStage(
+		stage,
+		position,
+		map,
+		mapObj,
+		levelObj,
+		currentImage,
+		images,
+		tileMapping,
+		playerImages,
+		hasItem
+	);
 }
 
 var prev = function() {
@@ -557,30 +432,7 @@ hammer.onswipe = function(ev) {
 	}
 };
 
-if (mediaSupport('audio/ogg; codecs=vorbis', 'audio') ||
-	mediaSupport('audio/mpeg', 'audio')) {
-	var melody = document.getElementById('melody');
-	var music = document.getElementById('music');
-	melody.volume = 0.15;
-	melody.muted = false;
-	music.addEventListener('click', function() {
-	  if(melody.muted) {
-		melody.muted = false;
-		music.classList.add('melody');
-	  } else {
-		melody.muted = true;
-		music.classList.remove('melody');
-	  }
-	}, false);
-	melody.addEventListener('ended', function() {
-		melody.currentTime = 0;
-		melody.pause();
-		melody.play();
-	}, false);
-	music.classList.add('show');
-	music.classList.add('melody');
-	melody.play();
-}
+initMusicUI();
 
 function start() {
 	title.classList.remove('hidden');
@@ -592,10 +444,10 @@ function start() {
 	stage.addEventListener('click', function(ev) {if (!moving) move(ev);}, false);
 	info.querySelector('span').addEventListener('click', function() { // Egg?
 		if (confirm('Open Animation?')) {
-			animation = true;
-			drawCloud();
+			animationState.enabled = true;
+			cloudRenderer.drawCloud();
 		} else {
-			animation = false;
+			animationState.enabled = false;
 		}
 	}, false);
 	document.getElementById('reset').addEventListener('click', function() {if (!moving) run(27);}, false);
@@ -613,23 +465,6 @@ function start() {
 		alert(document.body.clientWidth+' & '+document.body.clientHeight+' & '+stage.clientWidth);
 		}, false);
 	*/
-}
-
-function playSound(filename) {
-	var index = ['intro','select','match','applause'].indexOf(filename);
-	var sound = document.querySelectorAll('audio.sound')[index];
-	sound.play();
-}
-
-function mediaSupport(mimetype, container) {
-	var elem = document.createElement(container);
-	if(typeof elem.canPlayType == 'function'){
-		var playable = elem.canPlayType(mimetype);
-		if((playable.toLowerCase() == 'maybe')||(playable.toLowerCase() == 'probably')){
-			return true;
-		}
-	}
-	return false;
 }
 
 function hasItem (array, itemx, itemy) {
@@ -661,48 +496,4 @@ function deepCopy(p,c) {
 		deepCopy(p[i],c[i]);
 	  } else c[i] = p[i];}
 	return c;
-}
-
-window.requestAnimFrame = (function(){
-return window.requestAnimationFrame   || 
-	window.webkitRequestAnimationFrame || 
-	window.mozRequestAnimationFrame    || 
-	window.oRequestAnimationFrame      || 
-	window.msRequestAnimationFrame     || 
-	function( callback ){
-		window.setTimeout(callback, 1000 / 60);
-	};
-})();
-
-function toggleFullscreen() {
-if ((document.fullScreenElement && document.fullScreenElement !== null) ||
-	(!document.mozFullScreen && !document.webkitIsFullScreen)) {
-		enterFullscreen(document.documentElement);
-	} else {
-		cancelFullscreen();
-	}
-}
-
-function enterFullscreen(docElm) {
-	if (docElm.requestFullscreen) {
-	    docElm.requestFullscreen();
-	}
-	else if (docElm.mozRequestFullScreen) {
-	    docElm.mozRequestFullScreen();
-	}
-	else if (docElm.webkitRequestFullScreen) {
-	    docElm.webkitRequestFullScreen();
-	}
-}
-
-function cancelFullscreen() {
-	if (document.exitFullscreen) {
-	    document.exitFullscreen();
-	}
-	else if (document.mozCancelFullScreen) {
-	    document.mozCancelFullScreen();
-	}
-	else if (document.webkitCancelFullScreen) {
-	    document.webkitCancelFullScreen();
-	}
 }
