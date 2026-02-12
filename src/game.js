@@ -1,11 +1,16 @@
 import astar from "./astar.js";
 import { Graph } from "./graph.js";
-import Hammer from "./hammer.js";
 import { PxLoader } from "./pxloader.js";
 import "./ios-orientationchange-fix.js";
 import { installRequestAnimFrame } from "./animation.js";
 import { initMusicUI, playSound } from "./audio.js";
 import { toggleFullscreen } from "./fullscreen.js";
+import {
+	initTouchUI,
+	initHammer,
+	bindUIControls,
+	getMoveFromClick
+} from "./input.js";
 import {
 	initImages,
 	createCloudRenderer,
@@ -357,8 +362,9 @@ var next = function() {
 }
 
 var move = function(ev) {
-	var clickx = ev.pageX ? Math.floor((ev.pageX - stage.offsetLeft)/TILEWIDTH) : ev.x;
-	var clicky = ev.pageY ? Math.floor((ev.pageY - stage.offsetTop - 20)/TILEFLOORHEIGHT) : ev.y;
+	var coords = getMoveFromClick(ev, stage);
+	var clickx = coords.clickx;
+	var clicky = coords.clicky;
 	var playerx = levelObj['startState']['player'][0];
 	var playery = levelObj['startState']['player'][1];
 	if (clickx == (playerx - 1) && clicky == playery)
@@ -403,34 +409,27 @@ var lines = data.innerHTML + '\n';
 var levels = parser(lines.split(/\n/));
 var levelObj, map, mapObj, moving = false;
 
-if (window.Touch || 'ontouchstart' in window) {
-	touch.classList.add('show');
-} else {
-	control.classList.add('show');
-}
+initTouchUI(control, touch);
 
-var hammer = new Hammer(document.documentElement);
-document.ontouchmove = function(event) 
-{
-	if (event.touches.length == 1)
-		event.preventDefault();   //Disables touch-scrolling AND pinch-to-zoom when called here.
-}
-hammer.onswipe = function(ev) {
-	switch(ev.direction) {		
-		case 'left':
-			if (!moving) run(37);
+initHammer(document.documentElement, function(direction) {
+	if (moving) {
+		return;
+	}
+	switch(direction) {
+		case LEFT:
+			run(37);
 			break;
-		case 'up':
-			if (!moving) run(38);
+		case UP:
+			run(38);
 			break;
-		case 'right':
-			if (!moving) run(39);
+		case RIGHT:
+			run(39);
 			break;
-		case 'down':
-			if (!moving) run(40);
+		case DOWN:
+			run(40);
 			break;
 	}
-};
+});
 
 initMusicUI();
 
@@ -439,21 +438,34 @@ function start() {
 	info.classList.remove('hidden');
 	reset();
 	document.addEventListener('keydown', run, false);
-	title.addEventListener('click', run, false);
-	splash.addEventListener('click', run, false);
-	stage.addEventListener('click', function(ev) {if (!moving) move(ev);}, false);
-	info.querySelector('span').addEventListener('click', function() { // Egg?
-		if (confirm('Open Animation?')) {
-			animationState.enabled = true;
-			cloudRenderer.drawCloud();
-		} else {
-			animationState.enabled = false;
+	bindUIControls({
+		title: title,
+		splash: splash,
+		info: info,
+		stage: stage,
+		resetButton: document.getElementById('reset'),
+		nextButton: document.getElementById('next'),
+		prevButton: document.getElementById('prev'),
+		undoButton: document.getElementById('undo'),
+		onRun: function(ev) {
+			if (!moving) {
+				run(ev);
+			}
+		},
+		onMove: function(ev) {
+			if (!moving) {
+				move(ev);
+			}
+		},
+		onEgg: function() {
+			if (confirm('Open Animation?')) {
+				animationState.enabled = true;
+				cloudRenderer.drawCloud();
+			} else {
+				animationState.enabled = false;
+			}
 		}
-	}, false);
-	document.getElementById('reset').addEventListener('click', function() {if (!moving) run(27);}, false);
-	document.getElementById('next').addEventListener('click', function() {if (!moving) run(78);}, false);
-	document.getElementById('prev').addEventListener('click', function() {if (!moving) run(66);}, false);
-	document.getElementById('undo').addEventListener('click', function() {if (!moving) run(8);}, false);
+	});
 	if (typeof document.cancelFullScreen != 'undefined' ||
 		typeof document.mozCancelFullScreen != 'undefined' ||
 		typeof document.webkitCancelFullScreen != 'undefined') {
