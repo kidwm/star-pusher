@@ -2,8 +2,7 @@ export function createGameActions(options) {
   var dom = options.dom;
   var render = options.render;
   var assets = options.assets;
-  var data = options.data;
-  var state = options.state;
+  var store = options.store;
   var logic = options.logic;
   var pathing = options.pathing;
   var audio = options.audio;
@@ -15,9 +14,9 @@ export function createGameActions(options) {
       assets.stage,
       assets.position,
       assets.map,
-      state.mapObj,
-      state.levelObj,
-      state.currentImage,
+      store.mapObj,
+      store.levelObj,
+      store.currentImage,
       assets.images,
       assets.tileMapping,
       assets.playerImages,
@@ -27,8 +26,8 @@ export function createGameActions(options) {
 
   function run(ev) {
     var key = ev.which ? ev.which : ev;
-    state.playerMoveTo = null;
-    var gameStateObj = state.levelObj["startState"];
+    store.playerMoveTo = null;
+    var gameStateObj = store.levelObj["startState"];
 
     if (!dom.title.classList.contains("hidden")) {
       audio.playSound("intro");
@@ -38,32 +37,32 @@ export function createGameActions(options) {
       return;
     }
 
-    if (state.levelIsComplete) {
-      state.currentLevelIndex += 1;
-      if (state.currentLevelIndex >= data.levels.length) {
-        state.currentLevelIndex = 0;
+    if (store.levelIsComplete) {
+      store.currentLevelIndex += 1;
+      if (store.currentLevelIndex >= store.levels.length) {
+        store.currentLevelIndex = 0;
       }
       reset();
       dom.splash.classList.add("hidden");
-      state.levelIsComplete = false;
+      store.levelIsComplete = false;
       return;
     }
 
     if ([8, 27, 37, 38, 39, 40, 66, 78].indexOf(ev.which) >= 0) {
       ev.preventDefault();
-      if (state.moving) {
+      if (store.moving) {
         return;
       }
     }
 
     switch (key) {
       case 8:
-        if (state.levelObj["steps"].length > 1) {
-          state.levelObj["steps"].pop();
-          state.levelObj["startState"] = structuredClone(
-            state.levelObj["steps"][state.levelObj["steps"].length - 1]
+        if (store.levelObj["steps"].length > 1) {
+          store.levelObj["steps"].pop();
+          store.levelObj["startState"] = structuredClone(
+            store.levelObj["steps"][store.levelObj["steps"].length - 1]
           );
-          state.mapNeedsRedraw = true;
+          store.mapNeedsRedraw = true;
         }
         break;
       case 27:
@@ -71,20 +70,20 @@ export function createGameActions(options) {
         audio.playSound("select");
         break;
       case 37:
-        state.playerMoveTo = directions.LEFT;
-        state.currentImage = 2;
+        store.playerMoveTo = directions.LEFT;
+        store.currentImage = 2;
         break;
       case 38:
-        state.playerMoveTo = directions.UP;
-        state.currentImage = 1;
+        store.playerMoveTo = directions.UP;
+        store.currentImage = 1;
         break;
       case 39:
-        state.playerMoveTo = directions.RIGHT;
-        state.currentImage = 3;
+        store.playerMoveTo = directions.RIGHT;
+        store.currentImage = 3;
         break;
       case 40:
-        state.playerMoveTo = directions.DOWN;
-        state.currentImage = 0;
+        store.playerMoveTo = directions.DOWN;
+        store.currentImage = 0;
         break;
       case 66:
         prev();
@@ -96,42 +95,42 @@ export function createGameActions(options) {
         break;
     }
 
-    if (state.playerMoveTo != null && !state.levelIsComplete) {
-      var moved = logic.makeMove(state.mapObj, gameStateObj, state.playerMoveTo, {
+    if (store.playerMoveTo != null && !store.levelIsComplete) {
+      var moved = logic.makeMove(store.mapObj, gameStateObj, store.playerMoveTo, {
         isWall: logic.isWall,
         isBlocked: logic.isBlocked,
         hasItem: logic.hasItem,
         playSound: audio.playSound,
-        goals: state.levelObj["goals"]
+        goals: store.levelObj["goals"]
       });
       if (moved) {
-        if (!state.moving) {
-          state.levelObj["steps"].push(structuredClone(gameStateObj));
+        if (!store.moving) {
+          store.levelObj["steps"].push(structuredClone(gameStateObj));
         }
-        state.mapNeedsRedraw = true;
+        store.mapNeedsRedraw = true;
       }
-      if (logic.isLevelFinished(state.levelObj, gameStateObj)) {
-        state.levelIsComplete = true;
+      if (logic.isLevelFinished(store.levelObj, gameStateObj)) {
+        store.levelIsComplete = true;
         dom.splash.classList.remove("hidden");
         audio.playSound("applause");
       }
     }
 
-    if (state.mapNeedsRedraw) {
+    if (store.mapNeedsRedraw) {
       redraw();
-      state.mapNeedsRedraw = false;
+      store.mapNeedsRedraw = false;
     }
   }
 
   function reset() {
-    state.levelObj = structuredClone(data.levels[state.currentLevelIndex]);
-    state.mapObj = state.levelObj["mapObj"];
-    state.currentImage = 0;
-    dom.info.querySelector("span").textContent = state.currentLevelIndex;
+    store.levelObj = structuredClone(store.levels[store.currentLevelIndex]);
+    store.mapObj = store.levelObj["mapObj"];
+    store.currentImage = 0;
+    dom.info.querySelector("span").textContent = store.currentLevelIndex;
     render.drawMap(
       assets.map,
       assets.platform,
-      state.mapObj,
+      store.mapObj,
       assets.tileMapping,
       assets.outsideDecoMapping
     );
@@ -139,18 +138,18 @@ export function createGameActions(options) {
   }
 
   function prev() {
-    state.currentLevelIndex =
-      state.currentLevelIndex - 1 < 0
-        ? data.levels.length - 1
-        : state.currentLevelIndex - 1;
+    store.currentLevelIndex =
+      store.currentLevelIndex - 1 < 0
+        ? store.levels.length - 1
+        : store.currentLevelIndex - 1;
     reset();
   }
 
   function next() {
-    state.currentLevelIndex =
-      state.currentLevelIndex + 1 >= data.levels.length
+    store.currentLevelIndex =
+      store.currentLevelIndex + 1 >= store.levels.length
         ? 0
-        : state.currentLevelIndex + 1;
+        : store.currentLevelIndex + 1;
     reset();
   }
 
@@ -158,8 +157,8 @@ export function createGameActions(options) {
     var coords = input.getMoveFromClick(ev, assets.stage);
     var clickx = coords.clickx;
     var clicky = coords.clicky;
-    var playerx = state.levelObj["startState"]["player"][0];
-    var playery = state.levelObj["startState"]["player"][1];
+    var playerx = store.levelObj["startState"]["player"][0];
+    var playery = store.levelObj["startState"]["player"][1];
 
     if (clickx == playerx - 1 && clicky == playery) {
       run(37);
@@ -170,13 +169,13 @@ export function createGameActions(options) {
     } else if (clickx == playerx && clicky == playery + 1) {
       run(40);
     } else if (
-      logic.isBlocked(state.mapObj, state.levelObj["startState"], clickx, clicky) ||
-      state.mapObj[clickx][clicky] == " "
+      logic.isBlocked(store.mapObj, store.levelObj["startState"], clickx, clicky) ||
+      store.mapObj[clickx][clicky] == " "
     ) {
       return;
     } else {
       var graph = new pathing.Graph(
-        logic.makeGrid(state.mapObj, state.levelObj, function(mapObjLocal, s, x, y) {
+        logic.makeGrid(store.mapObj, store.levelObj, function(mapObjLocal, s, x, y) {
           return logic.isBlocked(mapObjLocal, s, x, y);
         })
       );
@@ -184,11 +183,11 @@ export function createGameActions(options) {
       var end = graph.nodes[clickx][clicky];
       var result = pathing.astar.search(graph.nodes, start, end);
       if (result.length > 0) {
-        state.moving = true;
+        store.moving = true;
         result.forEach(function(element, index, array) {
           if (index == array.length - 1) {
             setTimeout(function() {
-              state.moving = false;
+              store.moving = false;
               move(element);
             }, 100 * index);
           } else {
@@ -219,12 +218,12 @@ export function createGameActions(options) {
       prevButton: dom.prevButton,
       undoButton: dom.undoButton,
       onRun: function(ev) {
-        if (!state.moving) {
+        if (!store.moving) {
           run(ev);
         }
       },
       onMove: function(ev) {
-        if (!state.moving) {
+        if (!store.moving) {
           move(ev);
         }
       },

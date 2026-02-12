@@ -12,6 +12,7 @@ import {
 } from "./input.js";
 import { parseLevels } from "./levels.js";
 import { createGameActions } from "./controller.js";
+import { createStore } from "./store.js";
 import { initLoader } from "./loader.js";
 import {
 	isWall,
@@ -68,16 +69,7 @@ var undoButton = document.getElementById('undo');
 var data = document.getElementById('data');
 var lines = data.innerHTML + '\n';
 var levels = parseLevels(lines.split(/\n/), isWall, outsideDecoMapping, structuredClone);
-var state = {
-	mapNeedsRedraw: false,
-	levelIsComplete: false,
-	playerMoveTo: null,
-	currentImage: 0,
-	moving: false,
-	currentLevelIndex: 0,
-	levelObj: null,
-	mapObj: null
-};
+var store = createStore(levels);
 
 var actions = createGameActions({
 	dom: {
@@ -104,10 +96,7 @@ var actions = createGameActions({
 		outsideDecoMapping: outsideDecoMapping,
 		playerImages: playerImages
 	},
-	data: {
-		levels: levels
-	},
-	state: state,
+	store: store,
 	logic: {
 		isWall: isWall,
 		isBlocked: isBlocked,
@@ -137,7 +126,7 @@ var actions = createGameActions({
 initTouchUI(control, touch);
 
 initHammer(document.documentElement, function(direction) {
-	if (state.moving) {
+	if (store.moving) {
 		return;
 	}
 	switch(direction) {
