@@ -8,6 +8,7 @@ export function createStore(levels) {
     moving: false,
     currentLevelIndex: 0,
     levelObj: null,
-    mapObj: null
+    mapObj: null,
+    gridCache: null
   };
 }

@@ -174,11 +174,23 @@ export function createGameActions(options) {
     ) {
       return;
     } else {
-      var graph = new pathing.Graph(
-        logic.makeGrid(store.mapObj, store.levelObj, function(mapObjLocal, s, x, y) {
-          return logic.isBlocked(mapObjLocal, s, x, y);
+      var starsKey = store.levelObj["startState"]["stars"]
+        .map(function(star) {
+          return star[0] + "," + star[1];
         })
-      );
+        .sort()
+        .join("|");
+      var cacheKey = store.currentLevelIndex + ":" + starsKey;
+      if (!store.gridCache || store.gridCache.key !== cacheKey) {
+        var grid = logic.makeGrid(store.mapObj, store.levelObj, function(mapObjLocal, s, x, y) {
+          return logic.isBlocked(mapObjLocal, s, x, y);
+        });
+        store.gridCache = {
+          key: cacheKey,
+          graph: new pathing.Graph(grid)
+        };
+      }
+      var graph = store.gridCache.graph;
       var start = graph.nodes[playerx][playery];
       var end = graph.nodes[clickx][clicky];
       var result = pathing.astar.search(graph.nodes, start, end);
