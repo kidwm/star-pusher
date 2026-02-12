@@ -1,5 +1,3 @@
-import astar from "./astar.js";
-import { Graph } from "./graph.js";
 import "./ios-orientationchange-fix.js";
 import { installRequestAnimFrame } from "./animation.js";
 import { initMusicUI, playSound } from "./audio.js";
@@ -16,6 +14,7 @@ import { createGameActions } from "./controller.js";
 import { createStore } from "./store.js";
 import { initLoader } from "./loader.js";
 import { createNotifier } from "./ui.js";
+import * as pathing from "./pathing.js";
 import {
 	isWall,
 	isBlocked,
@@ -110,10 +109,7 @@ var actions = createGameActions({
 		makeMove: makeMove,
 		makeGrid: makeGrid
 	},
-	pathing: {
-		Graph: Graph,
-		astar: astar
-	},
+	pathing: pathing,
 	audio: {
 		playSound: playSound
 	},

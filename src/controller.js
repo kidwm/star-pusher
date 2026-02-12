@@ -225,59 +225,33 @@ export function createGameActions(options) {
       return;
     }
 
-    var coords = input.getMoveFromClick(ev, assets.stage, store.cameraX, store.cameraY);
-    var clickx = coords.clickx;
-    var clicky = coords.clicky;
-    var playerx = store.levelObj["startState"]["player"][0];
-    var playery = store.levelObj["startState"]["player"][1];
+    var intent = pathing.getClickIntent({
+      store: store,
+      stage: assets.stage,
+      ev: ev,
+      getMoveFromClick: input.getMoveFromClick,
+      isBlocked: logic.isBlocked,
+      keyCodes: keys.codes,
+      getPath: function(clickx, clicky, playerx, playery) {
+        return pathing.buildPathForTarget({
+          store: store,
+          logic: logic,
+          clickx: clickx,
+          clicky: clicky,
+          playerx: playerx,
+          playery: playery
+        });
+      }
+    });
 
-    if (clickx == playerx - 1 && clicky == playery) {
-      run(keys.codes.LEFT);
-    } else if (clickx == playerx && clicky == playery - 1) {
-      run(keys.codes.UP);
-    } else if (clickx == playerx + 1 && clicky == playery) {
-      run(keys.codes.RIGHT);
-    } else if (clickx == playerx && clicky == playery + 1) {
-      run(keys.codes.DOWN);
-    } else if (
-      logic.isBlocked(store.mapObj, store.levelObj["startState"], clickx, clicky) ||
-      store.mapObj[clickx][clicky] == " "
-    ) {
-      return;
-    } else {
-      var starsKey = store.levelObj["startState"]["stars"]
-        .map(function(star) {
-          return star[0] + "," + star[1];
-        })
-        .sort()
-        .join("|");
-      var cacheKey = store.currentLevelIndex + ":" + starsKey;
-      if (!store.gridCache || store.gridCache.key !== cacheKey) {
-        var grid = logic.makeGrid(store.mapObj, store.levelObj, function(mapObjLocal, s, x, y) {
-          return logic.isBlocked(mapObjLocal, s, x, y);
-        });
-        store.gridCache = {
-          key: cacheKey,
-          graph: new pathing.Graph(grid)
-        };
-      }
-      var graph = store.gridCache.graph;
-      var start = graph.nodes[playerx][playery];
-      var end = graph.nodes[clickx][clicky];
-      var result = pathing.astar.search(graph.nodes, start, end);
-      if (result.length > 0) {
-        store.moving = true;
-        result.forEach(function(element, index, array) {
-          if (index == array.length - 1) {
-            setTimeout(function() {
-              store.moving = false;
-              move(element);
-            }, 100 * index);
-          } else {
-            setTimeout(move, 100 * index, element);
-          }
-        });
-      }
+    if (intent.kind == "direct") {
+      run(intent.keyCode);
+    } else if (intent.kind == "path") {
+      pathing.followPath(intent.path, {
+        store: store,
+        keyCodes: keys.codes,
+        runMoveByKey: run
+      });
     }
   }
 
