@@ -1,3 +1,19 @@
+import frontPng from "../images/front.png";
+import backPng from "../images/back.png";
+import leftPng from "../images/left.png";
+import rightPng from "../images/right.png";
+import grassBlockPng from "../images/Grass_Block.png";
+import plainBlockPng from "../images/Plain_Block.png";
+import redSelectorPng from "../images/RedSelector.png";
+import rockPng from "../images/Rock.png";
+import selectorPng from "../images/Selector.png";
+import starPng from "../images/Star.png";
+import treeShortPng from "../images/Tree_Short.png";
+import treeTallPng from "../images/Tree_Tall.png";
+import treeUglyPng from "../images/Tree_Ugly.png";
+import wallBlockTallPng from "../images/Wall_Block_Tall.png";
+import woodBlockTallPng from "../images/Wood_Block_Tall.png";
+
 export const TILEWIDTH = 50;
 export const TILEHEIGHT = 85;
 export const TILEFLOORHEIGHT = 40;
@@ -32,19 +48,19 @@ export const MOVEMENT_KEYS = [
 ];
 
 export const FILES = {
-  "uncovered goal": "images/RedSelector.png",
-  "covered goal": "images/Selector.png",
-  "star": "images/Star.png",
-  "corner": "images/Wall_Block_Tall.png",
-  "wall": "images/Wood_Block_Tall.png",
-  "inside floor": "images/Plain_Block.png",
-  "outside floor": "images/Grass_Block.png",
-  "front": "images/front.png",
-  "back": "images/back.png",
-  "left": "images/left.png",
-  "right": "images/right.png",
-  "rock": "images/Rock.png",
-  "short tree": "images/Tree_Short.png",
-  "tall tree": "images/Tree_Tall.png",
-  "ugly tree": "images/Tree_Ugly.png"
+  "uncovered goal": redSelectorPng,
+  "covered goal": selectorPng,
+  "star": starPng,
+  "corner": wallBlockTallPng,
+  "wall": woodBlockTallPng,
+  "inside floor": plainBlockPng,
+  "outside floor": grassBlockPng,
+  "front": frontPng,
+  "back": backPng,
+  "left": leftPng,
+  "right": rightPng,
+  "rock": rockPng,
+  "short tree": treeShortPng,
+  "tall tree": treeTallPng,
+  "ugly tree": treeUglyPng
 };
