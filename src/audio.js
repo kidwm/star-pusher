@@ -1,4 +1,10 @@
 var MUSIC_MUTED_KEY = "star-pusher.music-muted";
+var EFFECT_NAMES = ["intro", "select", "match", "applause"];
+var MAX_QUEUED_EFFECT_PLAYS = 6;
+var effectAudioContext = null;
+var effectBuffers = {};
+var effectLoading = {};
+var effectQueuedPlays = {};
 
 function loadMutedPreference() {
   try {
@@ -17,9 +23,123 @@ function saveMutedPreference(isMuted) {
 }
 
 export function playSound(filename) {
-  var index = ["intro", "select", "match", "applause"].indexOf(filename);
-  var sound = document.querySelectorAll("audio.sound")[index];
-  sound.play();
+  var index = EFFECT_NAMES.indexOf(filename);
+  if (index < 0) {
+    return;
+  }
+  var baseSound = document.querySelectorAll("audio.sound")[index];
+  if (!baseSound) {
+    return;
+  }
+
+  if (baseSound.muted) {
+    return;
+  }
+
+  var ctx = getEffectAudioContext();
+  if (!ctx) {
+    fallbackPlay(baseSound);
+    return;
+  }
+  if (ctx.state === "suspended") {
+    ctx.resume().catch(function() {});
+  }
+
+  if (effectBuffers[filename]) {
+    playDecodedBuffer(ctx, effectBuffers[filename], baseSound.volume);
+    return;
+  }
+
+  if (!effectQueuedPlays[filename]) {
+    effectQueuedPlays[filename] = 0;
+  }
+  effectQueuedPlays[filename] = Math.min(
+    MAX_QUEUED_EFFECT_PLAYS,
+    effectQueuedPlays[filename] + 1
+  );
+}
+
+function getEffectAudioContext() {
+  if (effectAudioContext) {
+    return effectAudioContext;
+  }
+  var Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) {
+    return null;
+  }
+  effectAudioContext = new Ctx();
+  return effectAudioContext;
+}
+
+function getEffectSourceUrl(baseSound) {
+  if (baseSound.currentSrc) {
+    return baseSound.currentSrc;
+  }
+  var source = baseSound.querySelector("source");
+  return source ? source.src : "";
+}
+
+function playDecodedBuffer(ctx, buffer, volume) {
+  var gain = ctx.createGain();
+  gain.gain.value = volume;
+  gain.connect(ctx.destination);
+
+  var source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(gain);
+  source.start(0);
+}
+
+function preloadEffectBuffers() {
+  var ctx = getEffectAudioContext();
+  if (!ctx) {
+    return;
+  }
+  var sounds = document.querySelectorAll("audio.sound");
+  sounds.forEach(function(sound, index) {
+    var filename = EFFECT_NAMES[index];
+    if (!filename || effectBuffers[filename] || effectLoading[filename]) {
+      return;
+    }
+    var src = getEffectSourceUrl(sound);
+    if (!src) {
+      return;
+    }
+    effectLoading[filename] = true;
+    fetch(src)
+      .then(function(res) {
+        return res.arrayBuffer();
+      })
+      .then(function(data) {
+        return ctx.decodeAudioData(data);
+      })
+      .then(function(buffer) {
+        effectBuffers[filename] = buffer;
+        var queued = effectQueuedPlays[filename] || 0;
+        effectQueuedPlays[filename] = 0;
+        for (var i = 0; i < queued; i++) {
+          playDecodedBuffer(ctx, buffer, sound.volume);
+        }
+      })
+      .catch(function() {
+        effectQueuedPlays[filename] = 0;
+      })
+      .finally(function() {
+        effectLoading[filename] = false;
+      });
+  });
+}
+
+function fallbackPlay(baseSound) {
+  try {
+    baseSound.currentTime = 0;
+  } catch (_err) {
+    // Ignore.
+  }
+  var playPromise = baseSound.play();
+  if (playPromise && typeof playPromise.catch === "function") {
+    playPromise.catch(function() {});
+  }
 }
 
 export function mediaSupport(mimetype, container) {
@@ -90,6 +210,7 @@ export function initMusicUI() {
       false
     );
     music.classList.add("show");
+    preloadEffectBuffers();
 
     if (!melody.muted) {
       document.addEventListener("pointerdown", startMusic, { once: true });
