@@ -11,6 +11,9 @@ export function createGameActions(options) {
   var input = options.input;
   var directions = options.directions;
   var keys = options.keys;
+  var cameraFollowRaf = null;
+  var cameraTargetX = 0;
+  var cameraTargetY = 0;
 
   function updateCameraBounds() {
     var viewportWidth = Math.min(assets.map.width, document.documentElement.clientWidth);
@@ -23,6 +26,8 @@ export function createGameActions(options) {
     updateCameraBounds();
     store.cameraX = Math.max(0, Math.min(store.cameraX, store.maxCameraX));
     store.cameraY = Math.max(0, Math.min(store.cameraY, store.maxCameraY));
+    cameraTargetX = Math.max(0, Math.min(cameraTargetX, store.maxCameraX));
+    cameraTargetY = Math.max(0, Math.min(cameraTargetY, store.maxCameraY));
   }
 
   function redraw() {
@@ -41,11 +46,49 @@ export function createGameActions(options) {
     );
   }
 
+  function stopCameraFollow() {
+    if (cameraFollowRaf != null) {
+      window.cancelAnimationFrame(cameraFollowRaf);
+      cameraFollowRaf = null;
+    }
+  }
+
+  function animateCameraFollow() {
+    clampCamera();
+    var dx = cameraTargetX - store.cameraX;
+    var dy = cameraTargetY - store.cameraY;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+      store.cameraX = cameraTargetX;
+      store.cameraY = cameraTargetY;
+      redraw();
+      stopCameraFollow();
+      return;
+    }
+    store.cameraX += dx * 0.2;
+    store.cameraY += dy * 0.2;
+    redraw();
+    cameraFollowRaf = window.requestAnimationFrame(animateCameraFollow);
+  }
+
+  function setCameraTarget(nextX, nextY, smooth) {
+    clampCamera();
+    cameraTargetX = Math.max(0, Math.min(nextX, store.maxCameraX));
+    cameraTargetY = Math.max(0, Math.min(nextY, store.maxCameraY));
+    if (!smooth) {
+      stopCameraFollow();
+      store.cameraX = cameraTargetX;
+      store.cameraY = cameraTargetY;
+      redraw();
+      return;
+    }
+    if (cameraFollowRaf == null) {
+      cameraFollowRaf = window.requestAnimationFrame(animateCameraFollow);
+    }
+  }
+
   function panBy(deltaX, deltaY) {
     clampCamera();
-    store.cameraX = Math.max(0, Math.min(store.cameraX - deltaX, store.maxCameraX));
-    store.cameraY = Math.max(0, Math.min(store.cameraY - deltaY, store.maxCameraY));
-    redraw();
+    setCameraTarget(store.cameraX - deltaX, store.cameraY - deltaY, false);
   }
 
   function canPan() {
@@ -53,7 +96,7 @@ export function createGameActions(options) {
     return store.maxCameraX > 0 || store.maxCameraY > 0;
   }
 
-  function keepPlayerInView() {
+  function keepPlayerInView(smooth) {
     if (!store.levelObj || !store.levelObj["startState"]) {
       return;
     }
@@ -65,24 +108,27 @@ export function createGameActions(options) {
     var playerPixelY = player[1] * TILEFLOORHEIGHT + TILEFLOORHEIGHT / 2;
     var marginX = Math.max(40, Math.floor(viewportWidth * 0.25));
     var marginY = Math.max(40, Math.floor(viewportHeight * 0.25));
-    var leftBound = store.cameraX + marginX;
-    var rightBound = store.cameraX + viewportWidth - marginX;
-    var topBound = store.cameraY + marginY;
-    var bottomBound = store.cameraY + viewportHeight - marginY;
+    var baseCameraX = cameraTargetX;
+    var baseCameraY = cameraTargetY;
+    var nextCameraX = baseCameraX;
+    var nextCameraY = baseCameraY;
+    var leftBound = baseCameraX + marginX;
+    var rightBound = baseCameraX + viewportWidth - marginX;
+    var topBound = baseCameraY + marginY;
+    var bottomBound = baseCameraY + viewportHeight - marginY;
 
     if (playerPixelX < leftBound) {
-      store.cameraX = playerPixelX - marginX;
+      nextCameraX = playerPixelX - marginX;
     } else if (playerPixelX > rightBound) {
-      store.cameraX = playerPixelX - (viewportWidth - marginX);
+      nextCameraX = playerPixelX - (viewportWidth - marginX);
     }
 
     if (playerPixelY < topBound) {
-      store.cameraY = playerPixelY - marginY;
+      nextCameraY = playerPixelY - marginY;
     } else if (playerPixelY > bottomBound) {
-      store.cameraY = playerPixelY - (viewportHeight - marginY);
+      nextCameraY = playerPixelY - (viewportHeight - marginY);
     }
-
-    clampCamera();
+    setCameraTarget(nextCameraX, nextCameraY, smooth !== false);
   }
 
   function run(ev) {
@@ -190,6 +236,8 @@ export function createGameActions(options) {
     store.currentImage = 0;
     store.cameraX = 0;
     store.cameraY = 0;
+    cameraTargetX = 0;
+    cameraTargetY = 0;
     store.gridCache = null;
     dom.info.querySelector("span").textContent = store.currentLevelIndex;
     render.drawMap(
@@ -199,8 +247,7 @@ export function createGameActions(options) {
       assets.tileMapping,
       assets.outsideDecoMapping
     );
-    keepPlayerInView();
-    redraw();
+    keepPlayerInView(false);
   }
 
   function prev() {
