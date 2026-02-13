@@ -11,10 +11,18 @@
   </head>
   <body>
   	<div id="info" class="hidden">
+  		<button id="about" type="button" title="About" aria-label="About this game">ℹ️</button>
   		<p id="level">Stage: <span>0</span></p>
   		<p class="baritem" id="music">Music</p>
 		<p class="baritem" id="fullscreen">FullScreen</p>
 	</div>
+	<dialog id="aboutDialog">
+		<div class="about-header">
+			<strong>About</strong>
+			<button id="aboutClose" type="button" aria-label="Close">Close</button>
+		</div>
+		<pre id="aboutContent"></pre>
+	</dialog>
   	<canvas id="sky"></canvas>
     <canvas id="stage"></canvas>
     <p id="loading">Loading…<span>0%</span></p>

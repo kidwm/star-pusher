@@ -28,12 +28,13 @@ transform: translateY(-50%);
 width: 100%;
 background-color: rgba(255, 255, 255, 0.8);
 cursor: pointer;
+padding-top: 20px;
+box-sizing: border-box;
 }
 
 strong {
 display: inline-block;
 font-size: 2em;
-padding-top: 20px;
 }
 
 #info {
@@ -42,23 +43,78 @@ padding-top: 20px;
 	width: 100%;
 	background-color: rgba(255, 255, 255, .5);
 	margin: 0;
-	padding: .5em 0;
+	padding: .5em;
 	z-index: 99;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
 }
 
 #level {
 	display: block;
-	float: left;
 	margin: 0 .5em;
+}
+
+#about {
+	display: block;
+	margin: 0 .5em;
+	padding: 0 0.2em;
+	border: none;
+	background: transparent;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+#aboutDialog {
+	width: min(92vw, 760px);
+	max-height: 80vh;
+	border: none;
+	border-radius: 8px;
+	padding: 0;
+}
+
+#aboutDialog::backdrop {
+	background-color: rgba(0, 0, 0, 0.55);
+}
+
+.about-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 16px;
+	background: #f3f3f3;
+	border-bottom: 1px solid #ddd;
+}
+
+#aboutClose {
+	border: 1px solid #bbb;
+	background: #fff;
+	padding: 4px 10px;
+	cursor: pointer;
+}
+
+#aboutContent {
+	margin: 0;
+	padding: 14px 16px 16px;
+	text-align: left;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	font-size: 13px;
+	white-space: pre-wrap;
+	overflow: auto;
+	max-height: calc(80vh - 60px);
 }
 
 .baritem {
 	display: none;
-	float: right;
-	text-align: right;
+	text-align: left;
 	margin: 0 10px 0 30px;
 	cursor: pointer;
 	position: relative;
+}
+
+#music {
+	margin-left: auto;
 }
 
 .baritem:before {

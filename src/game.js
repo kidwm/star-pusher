@@ -12,8 +12,9 @@ import { parseLevels } from "./levels.js";
 import { createGameActions } from "./controller.js";
 import { createStore } from "./store.js";
 import { initLoader } from "./loader.js";
-import { createNotifier } from "./ui.js";
+import { createNotifier, initAboutDialog } from "./ui.js";
 import * as pathing from "./pathing.js";
+import readmeText from "../README.md?raw";
 import {
 	isWall,
 	isBlocked,
@@ -59,6 +60,10 @@ var playerImages = imageState.playerImages;
 var cloudRenderer = createCloudRenderer(sky, cloud, animationState);
 
 var info = document.getElementById('info');
+var about = document.getElementById('about');
+var aboutDialog = document.getElementById('aboutDialog');
+var aboutClose = document.getElementById('aboutClose');
+var aboutContent = document.getElementById('aboutContent');
 var fullscreen = document.getElementById('fullscreen');
 var title = document.getElementById('title');
 var splash = document.getElementById('splash');
@@ -128,6 +133,7 @@ var actions = createGameActions({
 });
 
 initTouchUI(control, touch);
+initAboutDialog(about, aboutDialog, aboutClose, aboutContent, readmeText);
 
 bindPanControls(stage, {
 	canPan: function() {

@@ -57,3 +57,23 @@ export function createNotifier() {
     element: dialog
   };
 }
+
+export function initAboutDialog(trigger, dialog, closeButton, content, readmeText) {
+  if (!trigger || !dialog || !closeButton || !content) {
+    return;
+  }
+
+  content.textContent = readmeText || "";
+
+  trigger.addEventListener("click", function() {
+    if (typeof dialog.showModal === "function") {
+      dialog.showModal();
+    } else {
+      dialog.open = true;
+    }
+  });
+
+  closeButton.addEventListener("click", function() {
+    dialog.close();
+  });
+}
