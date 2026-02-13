@@ -58,12 +58,126 @@ export function createNotifier() {
   };
 }
 
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderInlineMarkdown(text) {
+  var escaped = escapeHtml(text);
+  return escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_m, label, href) {
+    var safeHref = href.trim();
+    if (!/^https?:\/\//i.test(safeHref)) {
+      return label;
+    }
+    return (
+      '<a href="' +
+      escapeHtml(safeHref) +
+      '" target="_blank" rel="noopener noreferrer">' +
+      label +
+      "</a>"
+    );
+  });
+}
+
+function markdownToHtml(markdown) {
+  var src = (markdown || "").replace(/\r\n/g, "\n");
+  var rawLines = src.split("\n");
+  var lines = [];
+
+  for (var i = 0; i < rawLines.length; i++) {
+    var current = rawLines[i];
+    var next = rawLines[i + 1];
+    if (next && /^=+$/.test(next.trim()) && current.trim()) {
+      lines.push("# " + current);
+      i += 1;
+      continue;
+    }
+    if (next && /^-+$/.test(next.trim()) && current.trim()) {
+      lines.push("## " + current);
+      i += 1;
+      continue;
+    }
+    lines.push(current);
+  }
+
+  var html = [];
+  var paragraph = [];
+  var list = [];
+
+  function flushParagraph() {
+    if (!paragraph.length) {
+      return;
+    }
+    html.push("<p>" + renderInlineMarkdown(paragraph.join(" ").trim()) + "</p>");
+    paragraph = [];
+  }
+
+  function flushList() {
+    if (!list.length) {
+      return;
+    }
+    html.push("<ul>");
+    list.forEach(function(item) {
+      html.push("<li>" + renderInlineMarkdown(item) + "</li>");
+    });
+    html.push("</ul>");
+    list = [];
+  }
+
+  lines.forEach(function(line) {
+    var trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      return;
+    }
+
+    var headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      var level = headingMatch[1].length;
+      html.push(
+        "<h" + level + ">" + renderInlineMarkdown(headingMatch[2].trim()) + "</h" + level + ">"
+      );
+      return;
+    }
+
+    if (/^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
+      flushParagraph();
+      flushList();
+      html.push("<hr />");
+      return;
+    }
+
+    var listMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+    if (listMatch) {
+      flushParagraph();
+      list.push(listMatch[1].trim());
+      return;
+    }
+
+    flushList();
+    paragraph.push(trimmed);
+  });
+
+  flushParagraph();
+  flushList();
+
+  return html.join("\n");
+}
+
 export function initAboutDialog(trigger, dialog, closeButton, content, readmeText) {
   if (!trigger || !dialog || !closeButton || !content) {
     return;
   }
 
-  content.textContent = readmeText || "";
+  content.innerHTML = markdownToHtml(readmeText);
 
   trigger.addEventListener("click", function() {
     if (typeof dialog.showModal === "function") {
