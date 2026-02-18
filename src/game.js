@@ -36,7 +36,8 @@ import {
 	LEFT,
 	RIGHT,
 	KEY_CODES,
-	MOVEMENT_KEYS
+	MOVEMENT_KEYS,
+	REPO_URL
 } from "./constants.js";
 
 // The total width and height of each tile in pixels.
@@ -133,7 +134,7 @@ var actions = createGameActions({
 });
 
 initTouchUI(control, touch);
-initAboutDialog(about, aboutDialog, aboutClose, aboutContent, readmeText);
+initAboutDialog(about, aboutDialog, aboutClose, aboutContent, readmeText, REPO_URL);
 
 bindPanControls(stage, {
 	canPan: function() {

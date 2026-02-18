@@ -172,12 +172,19 @@ function markdownToHtml(markdown) {
   return html.join("\n");
 }
 
-export function initAboutDialog(trigger, dialog, closeButton, content, readmeText) {
+export function initAboutDialog(trigger, dialog, closeButton, content, readmeText, repoUrl) {
   if (!trigger || !dialog || !closeButton || !content) {
     return;
   }
 
-  content.innerHTML = markdownToHtml(readmeText);
+  var rendered = markdownToHtml(readmeText);
+  if (repoUrl) {
+    rendered +=
+      '\n<h2>Source Code</h2><p><a href="' +
+      escapeHtml(repoUrl) +
+      '" target="_blank" rel="noopener noreferrer">GitHub Repository</a></p>';
+  }
+  content.innerHTML = rendered;
 
   trigger.addEventListener("click", function() {
     if (typeof dialog.showModal === "function") {

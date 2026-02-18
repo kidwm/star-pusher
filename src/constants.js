@@ -19,6 +19,7 @@ export const TILEHEIGHT = 85;
 export const TILEFLOORHEIGHT = 40;
 
 export const OUTSIDE_DECORATION_PCT = 0.2;
+export const REPO_URL = "https://github.com/kidwm/star-pusher";
 
 export const UP = "up";
 export const DOWN = "down";
