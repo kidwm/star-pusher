@@ -1,7 +1,15 @@
 import { TILEWIDTH, TILEHEIGHT, TILEFLOORHEIGHT } from "./constants.js";
 
 export function initTouchUI(control, touch) {
-  if (window.Touch || "ontouchstart" in window) {
+  var isCoarsePointer =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
+  var hasTouchPoints =
+    typeof navigator !== "undefined" &&
+    typeof navigator.maxTouchPoints === "number" &&
+    navigator.maxTouchPoints > 0;
+
+  if (isCoarsePointer || hasTouchPoints) {
     touch.classList.add("show");
   } else {
     control.classList.add("show");
