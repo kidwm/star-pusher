@@ -57,7 +57,7 @@ font-size: 2em;
 
 #about {
 	display: block;
-	margin: 0 .5em;
+	margin: 0;
 	padding: 0 0.2em;
 	border: none;
 	background: transparent;
@@ -134,7 +134,7 @@ font-size: 2em;
 .baritem {
 	display: none;
 	text-align: left;
-	margin: 0 10px 0 30px;
+	margin: 0 0 0 32px;
 	cursor: pointer;
 	position: relative;
 }
