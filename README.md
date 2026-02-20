@@ -17,3 +17,10 @@ PlanetCute
 Microban
 --------
 Copyright: [David W Skinner](http://users.bentonrea.com/~sasquatch/sokoban/)
+
+
+Music
+-----
+Author: [MGdesigner](https://magicdesign.blogspot.com/)
+
+License: [cc-by-3.0-tw](https://creativecommons.org/licenses/by/3.0/tw/)
